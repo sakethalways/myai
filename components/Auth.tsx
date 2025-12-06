@@ -187,36 +187,36 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
       {/* About Us Modal */}
       {showAbout && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
-          <div className="bg-white rounded-3xl w-full max-w-sm sm:max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
-            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 flex justify-between items-center text-white">
-              <div className="flex items-center gap-3">
+          <div className="bg-white rounded-3xl w-full max-w-sm sm:max-w-2xl lg:max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
+            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 md:p-6 flex justify-between items-center text-white">
+              <div className="flex items-center gap-2 md:gap-3">
                 <div className="bg-white/20 p-2 rounded-lg">
-                  <BrainCircuit size={24} />
+                  <BrainCircuit size={20} className="md:w-6 md:h-6" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold">About NeuroTrack AI</h2>
-                  <p className="text-indigo-200 text-sm">Your AI-powered productivity companion</p>
+                  <h2 className="text-xl md:text-2xl font-bold">About NeuroTrack AI</h2>
+                  <p className="text-indigo-200 text-xs md:text-sm">Your AI-powered productivity companion</p>
                 </div>
               </div>
               <button
                 onClick={() => setShowAbout(false)}
                 className="hover:bg-white/20 p-2 rounded-full transition"
               >
-                <X size={24} />
+                <X size={20} className="md:w-6 md:h-6" />
               </button>
             </div>
 
-            <div className="p-8 overflow-y-auto max-h-[calc(90vh-120px)] custom-scrollbar">
-              <div className="space-y-8">
+            <div className="p-4 md:p-8 overflow-y-auto max-h-[calc(90vh-120px)] custom-scrollbar">
+              <div className="space-y-6 md:space-y-8">
                 {/* What is NeuroTrack AI */}
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-2xl border border-blue-100">
-                  <div className="flex items-start gap-4">
-                    <div className="bg-blue-100 p-3 rounded-xl text-blue-600">
-                      <BrainCircuit size={24} />
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 md:p-6 rounded-2xl border border-blue-100">
+                  <div className="flex items-start gap-3 md:gap-4">
+                    <div className="bg-blue-100 p-2 md:p-3 rounded-xl text-blue-600 flex-shrink-0">
+                      <BrainCircuit size={20} className="md:w-6 md:h-6" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold text-slate-800 mb-2">What is NeuroTrack AI?</h3>
-                      <p className="text-slate-600 leading-relaxed">
+                      <h3 className="text-lg md:text-xl font-bold text-slate-800 mb-2">What is NeuroTrack AI?</h3>
+                      <p className="text-slate-600 leading-relaxed text-sm md:text-base">
                         NeuroTrack AI is an intelligent productivity and habit-tracking application that combines
                         neuroscience-inspired design with cutting-edge AI technology. It helps users build sustainable
                         habits, achieve their goals, and maintain consistent productivity through personalized insights
@@ -227,33 +227,33 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
                 </div>
 
                 {/* How it Works */}
-                <div className="bg-gradient-to-r from-emerald-50 to-green-50 p-6 rounded-2xl border border-emerald-100">
-                  <div className="flex items-start gap-4">
-                    <div className="bg-emerald-100 p-3 rounded-xl text-emerald-600">
-                      <Target size={24} />
+                <div className="bg-gradient-to-r from-emerald-50 to-green-50 p-4 md:p-6 rounded-2xl border border-emerald-100">
+                  <div className="flex items-start gap-3 md:gap-4">
+                    <div className="bg-emerald-100 p-2 md:p-3 rounded-xl text-emerald-600 flex-shrink-0">
+                      <Target size={20} className="md:w-6 md:h-6" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold text-slate-800 mb-2">How It Works</h3>
-                      <p className="text-slate-600 leading-relaxed mb-4">
+                      <h3 className="text-lg md:text-xl font-bold text-slate-800 mb-2">How It Works</h3>
+                      <p className="text-slate-600 leading-relaxed mb-3 md:mb-4 text-sm md:text-base">
                         Track your daily activities, set meaningful goals, and let our AI analyze your patterns to provide
                         personalized recommendations and insights.
                       </p>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="flex items-center gap-3">
-                          <Calendar size={18} className="text-emerald-500" />
-                          <span className="text-sm text-slate-700">Daily logging & journaling</span>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                        <div className="flex items-center gap-2 md:gap-3">
+                          <Calendar size={16} className="text-emerald-500 md:w-[18px] md:h-[18px]" />
+                          <span className="text-xs md:text-sm text-slate-700">Daily logging & journaling</span>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <BarChart3 size={18} className="text-emerald-500" />
-                          <span className="text-sm text-slate-700">Progress visualization</span>
+                        <div className="flex items-center gap-2 md:gap-3">
+                          <BarChart3 size={16} className="text-emerald-500 md:w-[18px] md:h-[18px]" />
+                          <span className="text-xs md:text-sm text-slate-700">Progress visualization</span>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <Bot size={18} className="text-emerald-500" />
-                          <span className="text-sm text-slate-700">Automated weekly/monthly AI reports</span>
+                        <div className="flex items-center gap-2 md:gap-3">
+                          <Bot size={16} className="text-emerald-500 md:w-[18px] md:h-[18px]" />
+                          <span className="text-xs md:text-sm text-slate-700">Automated weekly/monthly AI reports</span>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <TrendingUp size={18} className="text-emerald-500" />
-                          <span className="text-sm text-slate-700">Habit streak tracking</span>
+                        <div className="flex items-center gap-2 md:gap-3">
+                          <TrendingUp size={16} className="text-emerald-500 md:w-[18px] md:h-[18px]" />
+                          <span className="text-xs md:text-sm text-slate-700">Habit streak tracking</span>
                         </div>
                       </div>
                     </div>
@@ -262,79 +262,79 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
 
                 {/* Key Features */}
                 <div>
-                  <h3 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-3">
-                    <Zap className="text-yellow-500" />
+                  <h3 className="text-lg md:text-2xl font-bold text-slate-800 mb-4 md:mb-6 flex items-center gap-2 md:gap-3">
+                    <Zap size={20} className="text-yellow-500 md:w-6 md:h-6" />
                     Key Features
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                      <div className="flex items-center gap-3 mb-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                    <div className="bg-white p-4 md:p-5 rounded-xl border border-slate-200 shadow-sm">
+                      <div className="flex items-center gap-2 md:gap-3 mb-3">
                         <div className="bg-indigo-100 p-2 rounded-lg text-indigo-600">
-                          <Target size={20} />
+                          <Target size={18} className="md:w-5 md:h-5" />
                         </div>
-                        <h4 className="font-bold text-slate-800">Goal Management</h4>
+                        <h4 className="font-bold text-slate-800 text-sm md:text-base">Goal Management</h4>
                       </div>
-                      <p className="text-slate-600 text-sm">
+                      <p className="text-slate-600 text-xs md:text-sm">
                         Set short-term and long-term goals with AI-generated milestones and progress tracking.
                       </p>
                     </div>
 
-                    <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                      <div className="flex items-center gap-3 mb-3">
+                    <div className="bg-white p-4 md:p-5 rounded-xl border border-slate-200 shadow-sm">
+                      <div className="flex items-center gap-2 md:gap-3 mb-3">
                         <div className="bg-purple-100 p-2 rounded-lg text-purple-600">
-                          <Calendar size={20} />
+                          <Calendar size={18} className="md:w-5 md:h-5" />
                         </div>
-                        <h4 className="font-bold text-slate-800">Daily Logging</h4>
+                        <h4 className="font-bold text-slate-800 text-sm md:text-base">Daily Logging</h4>
                       </div>
-                      <p className="text-slate-600 text-sm">
+                      <p className="text-slate-600 text-xs md:text-sm">
                         Log tasks, journal entries, and mood scores to build comprehensive activity records.
                       </p>
                     </div>
 
-                    <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                      <div className="flex items-center gap-3 mb-3">
+                    <div className="bg-white p-4 md:p-5 rounded-xl border border-slate-200 shadow-sm">
+                      <div className="flex items-center gap-2 md:gap-3 mb-3">
                         <div className="bg-cyan-100 p-2 rounded-lg text-cyan-600">
-                          <Bot size={20} />
+                          <Bot size={18} className="md:w-5 md:h-5" />
                         </div>
-                        <h4 className="font-bold text-slate-800">AI Analysis</h4>
+                        <h4 className="font-bold text-slate-800 text-sm md:text-base">AI Analysis</h4>
                       </div>
-                      <p className="text-slate-600 text-sm">
+                      <p className="text-slate-600 text-xs md:text-sm">
                         <strong>Automated weekly & monthly reports</strong> generated every Sunday and month-end with personalized insights, pattern recognition, and actionable recommendations based on your activity data.
                       </p>
                     </div>
 
-                    <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                      <div className="flex items-center gap-3 mb-3">
+                    <div className="bg-white p-4 md:p-5 rounded-xl border border-slate-200 shadow-sm">
+                      <div className="flex items-center gap-2 md:gap-3 mb-3">
                         <div className="bg-green-100 p-2 rounded-lg text-green-600">
-                          <BarChart3 size={20} />
+                          <BarChart3 size={18} className="md:w-5 md:h-5" />
                         </div>
-                        <h4 className="font-bold text-slate-800">Data Visualization</h4>
+                        <h4 className="font-bold text-slate-800 text-sm md:text-base">Data Visualization</h4>
                       </div>
-                      <p className="text-slate-600 text-sm">
+                      <p className="text-slate-600 text-xs md:text-sm">
                         Interactive charts and heatmaps to visualize productivity patterns and trends.
                       </p>
                     </div>
 
-                    <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                      <div className="flex items-center gap-3 mb-3">
+                    <div className="bg-white p-4 md:p-5 rounded-xl border border-slate-200 shadow-sm">
+                      <div className="flex items-center gap-2 md:gap-3 mb-3">
                         <div className="bg-orange-100 p-2 rounded-lg text-orange-600">
-                          <Shield size={20} />
+                          <Shield size={18} className="md:w-5 md:h-5" />
                         </div>
-                        <h4 className="font-bold text-slate-800">Privacy First</h4>
+                        <h4 className="font-bold text-slate-800 text-sm md:text-base">Privacy First</h4>
                       </div>
-                      <p className="text-slate-600 text-sm">
+                      <p className="text-slate-600 text-xs md:text-sm">
                         Your data is securely stored and only accessible to you. No third-party sharing.
                       </p>
                     </div>
 
-                    <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                      <div className="flex items-center gap-3 mb-3">
+                    <div className="bg-white p-4 md:p-5 rounded-xl border border-slate-200 shadow-sm">
+                      <div className="flex items-center gap-2 md:gap-3 mb-3">
                         <div className="bg-pink-100 p-2 rounded-lg text-pink-600">
-                          <TrendingUp size={20} />
+                          <TrendingUp size={18} className="md:w-5 md:h-5" />
                         </div>
-                        <h4 className="font-bold text-slate-800">Streak Tracking</h4>
+                        <h4 className="font-bold text-slate-800 text-sm md:text-base">Streak Tracking</h4>
                       </div>
-                      <p className="text-slate-600 text-sm">
+                      <p className="text-slate-600 text-xs md:text-sm">
                         Build and maintain productivity streaks with visual progress indicators.
                       </p>
                     </div>
@@ -342,14 +342,14 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
                 </div>
 
                 {/* Why Choose NeuroTrack */}
-                <div className="bg-gradient-to-r from-violet-50 to-purple-50 p-6 rounded-2xl border border-violet-100">
-                  <div className="flex items-start gap-4">
-                    <div className="bg-violet-100 p-3 rounded-xl text-violet-600">
-                      <Zap size={24} />
+                <div className="bg-gradient-to-r from-violet-50 to-purple-50 p-4 md:p-6 rounded-2xl border border-violet-100">
+                  <div className="flex items-start gap-3 md:gap-4">
+                    <div className="bg-violet-100 p-2 md:p-3 rounded-xl text-violet-600 flex-shrink-0">
+                      <Zap size={20} className="md:w-6 md:h-6" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold text-slate-800 mb-2">Why Choose NeuroTrack AI?</h3>
-                      <ul className="text-slate-600 space-y-2">
+                      <h3 className="text-lg md:text-xl font-bold text-slate-800 mb-2">Why Choose NeuroTrack AI?</h3>
+                      <ul className="text-slate-600 space-y-2 text-sm md:text-base">
                         <li className="flex items-start gap-2">
                           <span className="text-violet-500 mt-1">•</span>
                           <span>Science-backed habit formation techniques</span>

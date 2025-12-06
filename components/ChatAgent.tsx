@@ -92,47 +92,47 @@ const ChatAgent: React.FC<ChatAgentProps> = ({ data }) => {
             </div>
 
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-3 md:p-4 lg:p-6 space-y-4 md:space-y-6 bg-slate-50 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-2 md:p-4 lg:p-6 space-y-3 md:space-y-6 bg-slate-50 custom-scrollbar">
                 {messages.map((msg) => (
-                    <div 
-                        key={msg.id} 
-                        className={`flex gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                    <div
+                        key={msg.id}
+                        className={`flex gap-3 md:gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                     >
                         {msg.role === 'model' && (
-                             <div className="w-8 h-8 rounded-full bg-slate-900 text-cyan-400 flex items-center justify-center flex-shrink-0 mt-1">
-                                <Bot size={16} />
+                             <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-slate-900 text-cyan-400 flex items-center justify-center flex-shrink-0 mt-1">
+                                <Bot size={14} className="md:w-4 md:h-4" />
                             </div>
                         )}
-                        
-                        <div className={`max-w-[90%] md:max-w-[75%] lg:max-w-[70%] rounded-2xl p-3 md:p-4 shadow-sm ${
-                            msg.role === 'user' 
-                            ? 'bg-indigo-600 text-white rounded-br-sm' 
+
+                        <div className={`max-w-[90%] sm:max-w-[90%] md:max-w-[75%] lg:max-w-[70%] rounded-2xl p-2 md:p-4 shadow-sm ${
+                            msg.role === 'user'
+                            ? 'bg-indigo-600 text-white rounded-br-sm'
                             : 'bg-white text-slate-800 border border-slate-200 rounded-bl-sm'
                         }`}>
-                            <div className="prose prose-sm max-w-none dark:prose-invert">
+                            <div className="prose prose-xs max-w-none dark:prose-invert break-words text-xs md:text-sm">
                                 <ReactMarkdown>{msg.text}</ReactMarkdown>
                             </div>
-                            <div className={`text-[10px] mt-2 opacity-50 ${msg.role === 'user' ? 'text-indigo-100' : 'text-slate-400'}`}>
+                            <div className={`text-[8px] md:text-[10px] mt-1 md:mt-2 opacity-50 ${msg.role === 'user' ? 'text-indigo-100' : 'text-slate-400'}`}>
                                 {new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                             </div>
                         </div>
 
                         {msg.role === 'user' && (
-                            <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center flex-shrink-0 mt-1">
-                                <User size={16} />
+                            <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center flex-shrink-0 mt-1">
+                                <User size={14} className="md:w-4 md:h-4" />
                             </div>
                         )}
                     </div>
                 ))}
                 {isTyping && (
-                    <div className="flex gap-4">
-                        <div className="w-8 h-8 rounded-full bg-slate-900 text-cyan-400 flex items-center justify-center flex-shrink-0 mt-1">
-                             <Bot size={16} />
+                    <div className="flex gap-3 md:gap-4">
+                        <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-slate-900 text-cyan-400 flex items-center justify-center flex-shrink-0 mt-1">
+                             <Bot size={14} className="md:w-4 md:h-4" />
                         </div>
-                        <div className="bg-white border border-slate-200 rounded-2xl p-4 rounded-bl-sm flex items-center gap-2">
-                             <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></div>
-                             <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce [animation-delay:0.2s]"></div>
-                             <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce [animation-delay:0.4s]"></div>
+                        <div className="bg-white border border-slate-200 rounded-2xl p-3 md:p-4 rounded-bl-sm flex items-center gap-2">
+                             <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-slate-400 rounded-full animate-bounce"></div>
+                             <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-slate-400 rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                             <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-slate-400 rounded-full animate-bounce [animation-delay:0.4s]"></div>
                         </div>
                     </div>
                 )}
@@ -140,26 +140,26 @@ const ChatAgent: React.FC<ChatAgentProps> = ({ data }) => {
             </div>
 
             {/* Input Area */}
-            <div className="p-4 bg-white border-t border-slate-100">
-                <form onSubmit={handleSend} className="relative flex items-center gap-3">
+            <div className="p-2 md:p-4 bg-white border-t border-slate-100">
+                <form onSubmit={handleSend} className="relative flex items-center gap-2 md:gap-3">
                     <input
                         type="text"
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         placeholder="Ask about your progress, consistency, or goals..."
-                        className="flex-1 bg-slate-100 text-slate-900 border-none rounded-xl px-5 py-4 focus:ring-2 focus:ring-indigo-500 outline-none transition placeholder-slate-400"
+                        className="flex-1 bg-slate-100 text-slate-900 border-none rounded-xl px-3 md:px-5 py-2.5 md:py-4 focus:ring-2 focus:ring-indigo-500 outline-none transition placeholder-slate-400 text-sm md:text-base"
                         disabled={isTyping}
                     />
-                    <button 
-                        type="submit" 
+                    <button
+                        type="submit"
                         disabled={!input.trim() || isTyping}
-                        className={`p-4 rounded-xl transition flex items-center justify-center shadow-lg ${
+                        className={`p-3 md:p-4 rounded-xl transition flex items-center justify-center shadow-lg ${
                             !input.trim() || isTyping
                             ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
                             : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200'
                         }`}
                     >
-                        {isTyping ? <RefreshCcw size={20} className="animate-spin" /> : <Send size={20} />}
+                        {isTyping ? <RefreshCcw size={18} className="md:w-5 md:h-5 animate-spin" /> : <Send size={18} className="md:w-5 md:h-5" />}
                     </button>
                 </form>
             </div>
