@@ -1,0 +1,5 @@
+{
+  "name": "NeuroTrack AI",
+  "description": "A robust, privacy-focused self-tracking application that utilizes a JSON-based file system structure to track habits, goals, and journaling. Features AI-powered analytics using Gemini to provide weekly and monthly feedback based on historical data patterns.",
+  "requestFramePermissions": []
+}
