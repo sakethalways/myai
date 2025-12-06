@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { User, Mail, Lock, Eye, EyeOff, BrainCircuit, Info, X, Target, Calendar, BarChart3, Bot, Shield, Zap, TrendingUp } from 'lucide-react';
+import favicon from '../public/favicon.png';
 
 interface AuthProps {
   onAuthSuccess: () => void;
@@ -56,7 +57,7 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
       <div className="absolute top-4 right-4 text-slate-300 text-xs text-right z-10">
         <div className="hidden lg:flex justify-center mb-2">
           <img 
-            src="/favicon.png" 
+            src={favicon} 
             alt="NeuroTrack AI Logo" 
             className="w-16 h-16 object-contain rounded-xl"
           />
