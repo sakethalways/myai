@@ -56,7 +56,7 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
       <div className="absolute top-4 right-4 text-slate-300 text-xs text-right z-10">
         <div className="hidden lg:flex justify-center mb-2">
           <img 
-            src="/Black and White Minimalist Simple Illustrated  Brain Tech Logo_20251206_204714_0000.png" 
+            src="/favicon.png" 
             alt="NeuroTrack AI Logo" 
             className="w-16 h-16 object-contain rounded-xl"
           />
