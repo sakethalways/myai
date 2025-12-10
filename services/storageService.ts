@@ -406,3 +406,301 @@ export const exportData = async () => {
         alert("Excel export failed (Library error). Downloaded JSON backup instead.");
     }
 };
+
+// --- Friend Functions ---
+
+export interface FriendData {
+  id: string;
+  name: string;
+  email: string;
+  streak: number;
+  todayTaskCount: number;
+  todayTasks: Array<{ id: string; text: string; completed: boolean }>;
+  activeShortTermGoals: number;
+  activeLongTermGoals: number;
+}
+
+// Search users by email or name (case-insensitive)
+export const searchUsers = async (query: string): Promise<FriendData[]> => {
+  if (!query.trim()) return [];
+
+  try {
+    const currentUserId = await getUserId();
+    if (!currentUserId) return [];
+
+    // Get existing friendships
+    const { data: friendships, error: friendError } = await supabase
+      .from('friendships')
+      .select('friend_id')
+      .eq('user_id', currentUserId);
+
+    if (friendError) {
+      console.warn('Friendships table might not exist or accessible:', friendError);
+    }
+
+    const connectedFriendIds = new Set(friendships?.map(f => f.friend_id) || []);
+
+    const { data: profiles, error } = await supabase
+      .from('profiles')
+      .select('id, name, email')
+      .or(`name.ilike.%${query}%,email.ilike.%${query}%`)
+      .limit(20);
+
+    if (error) {
+      console.error('Search profiles error:', error);
+      throw error;
+    }
+
+    console.log('Search query:', query);
+    console.log('Found profiles:', profiles?.length || 0);
+    console.log('Current user:', currentUserId);
+    console.log('Connected friend IDs:', Array.from(connectedFriendIds));
+
+    // Filter out current user and already connected friends
+    const filteredProfiles = (profiles || []).filter(
+      (p: any) => p.id !== currentUserId && !connectedFriendIds.has(p.id)
+    );
+
+    console.log('Filtered profiles:', filteredProfiles.length);
+
+    // Get additional data for each user
+    const enrichedUsers: FriendData[] = await Promise.all(
+      filteredProfiles.map(async (profile: any) => {
+        const userId = profile.id;
+        const userEmail = profile.email || '';
+
+        try {
+          // Get today's date
+          const today = new Date().toISOString().split('T')[0];
+          
+          // Get today's entry
+          const { data: todayEntry, error: todayError } = await supabase
+            .from('daily_entries')
+            .select('*')
+            .eq('user_id', userId)
+            .eq('date', today)
+            .single();
+
+          if (todayError && todayError.code !== 'PGRST116') {
+            console.error(`Error fetching today's entry for ${userId}:`, todayError);
+          }
+
+          // Calculate streak - count days where ALL tasks are completed
+          const { data: allEntries, error: entriesError } = await supabase
+            .from('daily_entries')
+            .select('date, total_count, completed_count')
+            .eq('user_id', userId)
+            .order('date', { ascending: false });
+
+          if (entriesError) {
+            console.error(`Error fetching entries for ${userId}:`, entriesError);
+          }
+
+          let streak = 0;
+          if (allEntries && allEntries.length > 0) {
+            const today = new Date();
+            
+            for (let i = 0; i < 365; i++) {
+              const d = new Date(today);
+              d.setDate(d.getDate() - i);
+              const dateStr = d.toISOString().split('T')[0];
+              
+              // Find entry for this date
+              const entry = allEntries.find(e => e.date === dateStr);
+              
+              // Day is complete if it has tasks and all are completed
+              const isComplete = entry && entry.total_count > 0 && entry.completed_count === entry.total_count;
+              
+              if (i === 0) {
+                if (isComplete) streak++;
+              } else {
+                if (isComplete) streak++;
+                else break;
+              }
+            }
+          }
+
+          console.log(`User ${userId}: streak=${streak}, todayTasks=${todayEntry?.total_count || 0}`);
+
+          // Get active goals
+          const { data: goalsData, error: goalsError } = await supabase
+            .from('goals')
+            .select('type, completed')
+            .eq('user_id', userId)
+            .eq('completed', false);
+
+          if (goalsError) {
+            console.error(`Error fetching goals for ${userId}:`, goalsError);
+          }
+
+          const activeShortTermGoals = goalsData?.filter(g => g.type === 'short-term').length || 0;
+          const activeLongTermGoals = goalsData?.filter(g => g.type === 'long-term').length || 0;
+
+          return {
+            id: userId,
+            name: profile.name || 'Unknown User',
+            email: userEmail,
+            streak,
+            todayTaskCount: todayEntry?.total_count || 0,
+            todayTasks: todayEntry?.todos || [],
+            activeShortTermGoals,
+            activeLongTermGoals
+          };
+        } catch (err) {
+          console.error(`Error enriching user ${userId}:`, err);
+          return {
+            id: userId,
+            name: profile.name || 'Unknown User',
+            email: userEmail,
+            streak: 0,
+            todayTaskCount: 0,
+            todayTasks: [],
+            activeShortTermGoals: 0,
+            activeLongTermGoals: 0
+          };
+        }
+      })
+    );
+
+    console.log('Enriched users:', enrichedUsers.length);
+    return enrichedUsers;
+  } catch (error) {
+    console.error('Failed to search users:', error);
+    return [];
+  }
+};
+
+// Connect to a friend
+export const connectFriend = async (friendId: string): Promise<boolean> => {
+  const userId = await getUserId();
+  if (!userId) return false;
+
+  try {
+    await supabase
+      .from('friendships')
+      .insert({
+        user_id: userId,
+        friend_id: friendId
+      });
+
+    return true;
+  } catch (error) {
+    console.error('Failed to connect friend:', error);
+    return false;
+  }
+};
+
+// Disconnect from a friend
+export const disconnectFriend = async (friendId: string): Promise<boolean> => {
+  const userId = await getUserId();
+  if (!userId) return false;
+
+  try {
+    await supabase
+      .from('friendships')
+      .delete()
+      .eq('user_id', userId)
+      .eq('friend_id', friendId);
+
+    return true;
+  } catch (error) {
+    console.error('Failed to disconnect friend:', error);
+    return false;
+  }
+};
+
+// Get user's friends list
+export const getFriends = async (): Promise<FriendData[]> => {
+  const userId = await getUserId();
+  if (!userId) return [];
+
+  try {
+    const { data: friendships } = await supabase
+      .from('friendships')
+      .select('friend_id')
+      .eq('user_id', userId);
+
+    if (!friendships || friendships.length === 0) return [];
+
+    const friendIds = friendships.map(f => f.friend_id);
+
+    // Get all friends data
+    const { data: friendProfiles } = await supabase
+      .from('profiles')
+      .select('id, name')
+      .in('id', friendIds);
+
+    const enrichedFriends: FriendData[] = await Promise.all(
+      (friendProfiles || []).map(async (profile: any) => {
+        const friendId = profile.id;
+
+        // Get today's date
+        const today = new Date().toISOString().split('T')[0];
+        const { data: todayEntry } = await supabase
+          .from('daily_entries')
+          .select('*')
+          .eq('user_id', friendId)
+          .eq('date', today)
+          .single();
+
+        // Calculate streak - count days where ALL tasks are completed
+        const { data: allEntries } = await supabase
+          .from('daily_entries')
+          .select('date, total_count, completed_count')
+          .eq('user_id', friendId)
+          .order('date', { ascending: false });
+
+        let streak = 0;
+        if (allEntries && allEntries.length > 0) {
+          const today = new Date();
+          
+          for (let i = 0; i < 365; i++) {
+            const d = new Date(today);
+            d.setDate(d.getDate() - i);
+            const dateStr = d.toISOString().split('T')[0];
+            
+            // Find entry for this date
+            const entry = allEntries.find(e => e.date === dateStr);
+            
+            // Day is complete if it has tasks and all are completed
+            const isComplete = entry && entry.total_count > 0 && entry.completed_count === entry.total_count;
+            
+            if (i === 0) {
+              if (isComplete) streak++;
+            } else {
+              if (isComplete) streak++;
+              else break;
+            }
+          }
+        }
+
+        // Get active goals
+        const { data: goalsData } = await supabase
+          .from('goals')
+          .select('type, completed')
+          .eq('user_id', friendId)
+          .eq('completed', false);
+
+        const activeShortTermGoals = goalsData?.filter(g => g.type === 'short-term').length || 0;
+        const activeLongTermGoals = goalsData?.filter(g => g.type === 'long-term').length || 0;
+
+        return {
+          id: friendId,
+          name: profile.name || 'Unknown User',
+          email: '', // Email not available in friendships view
+          streak,
+          todayTaskCount: todayEntry?.total_count || 0,
+          todayTasks: todayEntry?.todos || [],
+          activeShortTermGoals,
+          activeLongTermGoals
+        };
+      })
+    );
+
+    // Sort by streak (descending)
+    return enrichedFriends.sort((a, b) => b.streak - a.streak);
+  } catch (error) {
+    console.error('Failed to get friends:', error);
+    return [];
+  }
+};

@@ -30,11 +30,26 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+        const { data: { user }, error } = await supabase.auth.signUp({
           email,
           password,
         });
         if (error) throw error;
+        
+        // Store email in profiles table
+        if (user) {
+          await supabase
+            .from('profiles')
+            .upsert({
+              id: user.id,
+              name: '',
+              age: '',
+              height: '',
+              weight: '',
+              email: email
+            });
+        }
+        
         setError('Check your email for the confirmation link!');
       } else {
         const { error } = await supabase.auth.signInWithPassword({

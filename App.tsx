@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, User, Target, BrainCircuit, LayoutDashboard, Menu, X, Download, Zap, TrendingUp, CalendarCheck, Flame, Bot, Star, PartyPopper, AlertTriangle, CheckCircle } from 'lucide-react';
+import { BookOpen, User, Target, BrainCircuit, LayoutDashboard, Menu, X, Download, Zap, TrendingUp, CalendarCheck, Flame, Bot, Star, PartyPopper, AlertTriangle, CheckCircle, Users } from 'lucide-react';
 import { AppData, DEFAULT_DATA, DailyEntry, AIAnalysis } from './types';
 import * as db from './services/storageService';
 import * as ai from './services/geminiService';
@@ -8,6 +8,7 @@ import Profile from './components/Profile';
 import DailyLog from './components/DailyLog';
 import GoalsManager from './components/GoalsManager';
 import ChatAgent from './components/ChatAgent';
+import Friends from './components/Friends';
 import { MissedTasks } from './components/MissedTasks';
 import { ConfirmationModal } from './components/ConfirmationModal';
 import { ProductivityChart, NeuralBalanceRadar, ActivityHeatmap, GoalCategoryChart } from './components/Charts';
@@ -332,6 +333,7 @@ export default function App() {
       { id: 'goals', label: 'Goals & Protocol', icon: Target },
       { id: 'missed', label: 'Missed Protocol', icon: AlertTriangle },
       { id: 'chat', label: 'Neural Agent', icon: Bot },
+      { id: 'friends', label: 'Connect Friends', icon: Users },
       { id: 'profile', label: 'Profile Identity', icon: User },
   ];
 
@@ -473,6 +475,8 @@ export default function App() {
               return <MissedTasks history={data.history} onDeleteTask={handleDeleteMissedTask} onClearDay={handleClearMissedDay} confirmAction={triggerConfirm} />;
           case 'chat':
               return <ChatAgent data={data} />;
+          case 'friends':
+              return <Friends userStreak={currentStreak} userTodayTaskCount={todayEntry.todos?.length || 0} confirmAction={triggerConfirm} />;
           case 'profile':
               return <Profile profile={data.profile} onSave={handleProfileSave} onResetData={handleResetData} confirmAction={triggerConfirm} />;
           default:
