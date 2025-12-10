@@ -184,9 +184,14 @@ const DailyLog: React.FC<DailyLogProps> = ({ date, entry, goals, onSave, onDelet
                     </h3>
                     <button 
                         onClick={handleManualSave}
-                        className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition shadow-md shadow-indigo-200"
+                        disabled={isSaving}
+                        className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition shadow-md shadow-indigo-200 ${
+                            isSaving 
+                                ? 'bg-slate-400 text-slate-200 cursor-not-allowed' 
+                                : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                        }`}
                     >
-                        <Save size={14} /> Save Entry
+                        <Save size={14} /> {isSaving ? 'Saving...' : 'Save Entry'}
                     </button>
                 </div>
                 <div className="flex-1 p-2 overflow-hidden">

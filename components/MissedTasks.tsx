@@ -68,7 +68,7 @@ export const MissedTasks: React.FC<MissedTasksProps> = ({ history, onDeleteTask,
                     <>
                         {missedEntries.map(entry => (
                             <div key={entry.date} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden transition hover:shadow-md">
-                                <div className="p-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+                                <div className="p-4 bg-slate-50 border-b border-slate-100 flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-0">
                                     <div className="flex items-center gap-3">
                                         <div className="bg-white p-2 rounded-lg text-red-500 border border-red-100 shadow-sm">
                                             <CalendarX size={18} />
@@ -80,13 +80,13 @@ export const MissedTasks: React.FC<MissedTasksProps> = ({ history, onDeleteTask,
                                             {entry.todos.length} Missed
                                         </span>
                                     </div>
-                                    <button 
+                                    <button
                                         onClick={() => {
                                             confirmAction(`Are you sure you want to clear all ${entry.todos.length} missed tasks for ${entry.date}?`, () => {
                                                 onClearDay(entry.date);
                                             });
                                         }}
-                                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition"
+                                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition self-start md:self-auto"
                                     >
                                         <Trash2 size={14} /> Clear Day
                                     </button>

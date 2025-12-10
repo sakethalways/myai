@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, User, Target, BrainCircuit, LayoutDashboard, Menu, X, Download, Zap, TrendingUp, CalendarCheck, Flame, Bot, Star, PartyPopper, AlertTriangle } from 'lucide-react';
+import { BookOpen, User, Target, BrainCircuit, LayoutDashboard, Menu, X, Download, Zap, TrendingUp, CalendarCheck, Flame, Bot, Star, PartyPopper, AlertTriangle, CheckCircle } from 'lucide-react';
 import { AppData, DEFAULT_DATA, DailyEntry, AIAnalysis } from './types';
 import * as db from './services/storageService';
 import * as ai from './services/geminiService';
@@ -12,6 +12,7 @@ import { MissedTasks } from './components/MissedTasks';
 import { ConfirmationModal } from './components/ConfirmationModal';
 import { ProductivityChart, NeuralBalanceRadar, ActivityHeatmap, GoalCategoryChart } from './components/Charts';
 import Auth from './components/Auth';
+import Notification from './components/Notification';
 import ReactMarkdown from 'react-markdown';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -23,10 +24,15 @@ export default function App() {
   const [aiReport, setAiReport] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1024);
+  const [dataLoaded, setDataLoaded] = useState(false);
+  const [showProfilePopup, setShowProfilePopup] = useState(false);
   
   // New States for Celebration Popup
   const [showCelebration, setShowCelebration] = useState(false);
   const [celebrationType, setCelebrationType] = useState<'weekly' | 'monthly'>('weekly');
+
+  // Success Notification State
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Global Confirmation Modal State
   const [confirmModal, setConfirmModal] = useState<{isOpen: boolean, message: string, onConfirm: () => void}>({
@@ -39,6 +45,15 @@ export default function App() {
       setConfirmModal({ isOpen: true, message, onConfirm });
   };
 
+  const showSuccess = (message: string) => {
+      setSuccessMessage(message);
+      setTimeout(() => setSuccessMessage(null), 3000);
+  };
+
+  const isProfileIncomplete = (profile: any) => {
+    return !profile.name.trim() || !profile.age.trim() || !profile.height.trim() || !profile.weight.trim();
+  };
+
   // Auth listener
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -47,6 +62,7 @@ export default function App() {
         loadData();
       } else {
         setData(DEFAULT_DATA);
+        setDataLoaded(false);
       }
     });
 
@@ -81,11 +97,15 @@ export default function App() {
       }
 
       setData(cleanedData);
+      setDataLoaded(true);
+      setShowProfilePopup(isProfileIncomplete(cleanedData.profile));
       checkAndGenerateAnalysis(cleanedData, todayStr);
     } catch (error) {
       console.error('Failed to load data:', error);
       // Keep default data on error to prevent app crash
       setData(DEFAULT_DATA);
+      setDataLoaded(true);
+      setShowProfilePopup(isProfileIncomplete(DEFAULT_DATA.profile));
     }
   };
 
@@ -172,6 +192,8 @@ export default function App() {
     try {
       const updated = await db.updateProfile(p);
       setData(updated);
+      setShowProfilePopup(false); // Hide popup when profile is completed
+      showSuccess('Profile saved successfully!');
     } catch (error) {
       console.error('Failed to save profile:', error);
       alert('Failed to save profile. Please try again.');
@@ -194,6 +216,7 @@ export default function App() {
     try {
       const updated = await db.saveDayEntry(entry);
       setData(updated);
+      showSuccess('Entry saved successfully!');
     } catch (error) {
       console.error('Failed to save daily entry:', error);
       alert('Failed to save your entry. Please try again.');
@@ -398,6 +421,36 @@ export default function App() {
                     <div className="grid grid-cols-1">
                         <ActivityHeatmap history={data.history} />
                     </div>
+
+                    {/* Profile Setup Popup */}
+                    {showProfilePopup && activeTab === 'dashboard' && (
+                        <div className="fixed top-4 right-4 bg-indigo-600 text-white px-3 py-2 md:px-4 md:py-3 rounded-lg shadow-lg z-40 max-w-xs md:max-w-sm animate-in slide-in-from-top-2 duration-300">
+                            <div className="flex items-start gap-3">
+                                <div className="bg-indigo-500 p-2 rounded-lg flex-shrink-0">
+                                    <User size={16} />
+                                </div>
+                                <div className="flex-1">
+                                    <p className="text-sm font-medium mb-1">Complete Your Profile</p>
+                                    <p className="text-xs text-indigo-100 mb-3">Fill your details in Identity Configuration to personalize your experience.</p>
+                                    <button 
+                                        onClick={() => {
+                                            setActiveTab('profile');
+                                            setShowProfilePopup(false);
+                                        }}
+                                        className="text-xs bg-white text-indigo-600 px-3 py-1 rounded-md font-medium hover:bg-indigo-50 transition-colors"
+                                    >
+                                        Go to Profile →
+                                    </button>
+                                </div>
+                                <button 
+                                    onClick={() => setShowProfilePopup(false)}
+                                    className="text-indigo-200 hover:text-white transition-colors"
+                                >
+                                    <X size={16} />
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
               );
           case 'journal':
@@ -523,6 +576,13 @@ export default function App() {
         onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
       />
 
+      {/* SUCCESS NOTIFICATION */}
+      <Notification
+        message={successMessage || ''}
+        isVisible={!!successMessage}
+        onClose={() => setSuccessMessage(null)}
+      />
+
       {/* CELEBRATION MODAL (POPUP) */}
       {showCelebration && (
           <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-500">
@@ -596,6 +656,3 @@ export default function App() {
   );
 }
 
-const CheckCircle = ({size}: {size:number}) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-)

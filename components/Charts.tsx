@@ -133,7 +133,7 @@ export const NeuralBalanceRadar: React.FC<{ data: AppData }> = ({ data }) => {
 };
 
 export const ActivityHeatmap: React.FC<{ history: Record<string, DailyEntry> }> = ({ history }) => {
-    const [view, setView] = useState<'week' | 'month' | 'year'>('year');
+    const [view, setView] = useState<'week' | 'month' | 'year'>('week');
 
     const generateData = () => {
         const today = new Date();

@@ -12,6 +12,7 @@ interface ProfileProps {
 const Profile: React.FC<ProfileProps> = ({ profile, onSave, onResetData, confirmAction }) => {
   const [form, setForm] = useState<UserProfile>(profile);
   const [isDirty, setIsDirty] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     setForm(profile);
@@ -23,10 +24,15 @@ const Profile: React.FC<ProfileProps> = ({ profile, onSave, onResetData, confirm
     setIsDirty(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(form);
-    setIsDirty(false);
+    setIsSaving(true);
+    try {
+      await onSave(form);
+      setIsDirty(false);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleReset = () => {
@@ -95,15 +101,15 @@ const Profile: React.FC<ProfileProps> = ({ profile, onSave, onResetData, confirm
             <div className="flex justify-end pt-6">
             <button
                 type="submit"
-                disabled={!isDirty}
+                disabled={!isDirty || isSaving}
                 className={`flex items-center gap-2 px-8 py-3 rounded-xl font-bold transition shadow-lg ${
-                isDirty
-                    ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200'
-                    : 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'
+                (!isDirty || isSaving)
+                    ? 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'
+                    : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200'
                 }`}
             >
                 <Save className="w-5 h-5" />
-                Save Profile Data
+                {isSaving ? 'Saving...' : 'Save Profile Data'}
             </button>
             </div>
         </form>
