@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, UserPlus, UserMinus, Flame, Target, CheckCircle2, Circle, ChevronRight, ArrowLeft, Mail, TrendingUp, Trophy, Calendar, Zap, AlertCircle } from 'lucide-react';
+import { Search, UserPlus, UserMinus, Flame, Target, CheckCircle2, Circle, ChevronRight, ArrowLeft, Mail, TrendingUp, Trophy, Calendar, Zap, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import * as db from '../services/storageService';
 
 interface FriendData {
@@ -27,11 +27,27 @@ const Friends: React.FC<FriendsProps> = ({ userStreak, userTodayTaskCount, confi
   const [isSearching, setIsSearching] = useState(false);
   const [isLoadingFriends, setIsLoadingFriends] = useState(true);
   const [selectedFriend, setSelectedFriend] = useState<FriendData | null>(null);
+  const [isDiscoverable, setIsDiscoverable] = useState(true);
+  const [isUpdatingVisibility, setIsUpdatingVisibility] = useState(false);
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [userName, setUserName] = useState<string>('You');
 
-  // Load friends on component mount
+  // Load friends and user visibility status on component mount
   useEffect(() => {
     loadFriends();
+    loadUserVisibility();
+    loadUserName();
   }, []);
+
+  // Auto-dismiss notification after 3 seconds
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => {
+        setNotification(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
 
   const loadFriends = async () => {
     setIsLoadingFriends(true);
@@ -43,6 +59,67 @@ const Friends: React.FC<FriendsProps> = ({ userStreak, userTodayTaskCount, confi
       console.error('Failed to load friends:', error);
     } finally {
       setIsLoadingFriends(false);
+    }
+  };
+
+  const loadUserVisibility = async () => {
+    try {
+      const visibility = await db.getUserVisibility();
+      setIsDiscoverable(visibility);
+    } catch (error) {
+      console.error('Failed to load visibility status:', error);
+    }
+  };
+
+  const loadUserName = async () => {
+    try {
+      const name = await db.getUserName();
+      if (name) setUserName(name);
+    } catch (error) {
+      console.error('Failed to load user name:', error);
+    }
+  };
+
+  const toggleVisibility = async () => {
+    const previousStatus = isDiscoverable;
+    const newStatus = !previousStatus;
+    
+    // Optimistic update
+    setIsDiscoverable(newStatus);
+    setIsUpdatingVisibility(true);
+    
+    try {
+      const success = await db.updateUserVisibility(newStatus);
+      if (!success) {
+        // Revert on failure
+        setIsDiscoverable(previousStatus);
+        setNotification({
+          message: 'Failed to update visibility. Please try again.',
+          type: 'error'
+        });
+        console.error('Failed to update visibility - reverted to previous state');
+      } else {
+        // Show success notification
+        const displayName = userName !== 'You' ? userName : 'Your profile';
+        const message = newStatus
+          ? `${displayName} is now visible in search`
+          : `${displayName} is now hidden from search`;
+        setNotification({
+          message,
+          type: 'success'
+        });
+        console.log('Visibility updated to:', newStatus ? 'visible' : 'hidden');
+      }
+    } catch (error) {
+      // Revert on error
+      setIsDiscoverable(previousStatus);
+      setNotification({
+        message: 'Error updating visibility. Please try again.',
+        type: 'error'
+      });
+      console.error('Failed to update visibility:', error);
+    } finally {
+      setIsUpdatingVisibility(false);
     }
   };
 
@@ -136,6 +213,35 @@ const Friends: React.FC<FriendsProps> = ({ userStreak, userTodayTaskCount, confi
                 <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
               <h2 className="text-sm sm:text-base md:text-lg font-bold text-slate-800">Discover Users</h2>
+              
+              {/* Visibility Toggle Button */}
+              <button
+                onClick={toggleVisibility}
+                disabled={isUpdatingVisibility}
+                className={`ml-auto flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg font-bold text-xs sm:text-sm transition ${
+                  isDiscoverable
+                    ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+                    : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                title={isDiscoverable ? 'You are visible to other users' : 'You are hidden from search results'}
+              >
+                {isUpdatingVisibility ? (
+                  <>
+                    <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                    <span className="hidden sm:inline">Updating...</span>
+                  </>
+                ) : isDiscoverable ? (
+                  <>
+                    <Eye className="w-4 h-4" />
+                    <span className="hidden sm:inline">Visible</span>
+                  </>
+                ) : (
+                  <>
+                    <EyeOff className="w-4 h-4" />
+                    <span className="hidden sm:inline">Hidden</span>
+                  </>
+                )}
+              </button>
             </div>
 
             {/* Search Bar */}
@@ -477,6 +583,28 @@ const Friends: React.FC<FriendsProps> = ({ userStreak, userTodayTaskCount, confi
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Notification Toast */}
+      {notification && (
+        <div className={`fixed bottom-6 right-6 left-6 sm:left-auto sm:w-96 p-4 rounded-lg shadow-lg border animate-in slide-in-from-bottom-5 transition-all duration-300 z-50 ${
+          notification.type === 'success'
+            ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+            : 'bg-red-50 border-red-200 text-red-800'
+        }`}>
+          <div className="flex items-center gap-3">
+            <div className={`w-2 h-2 rounded-full ${
+              notification.type === 'success' ? 'bg-emerald-600' : 'bg-red-600'
+            }`}></div>
+            <p className="font-medium text-sm flex-1">{notification.message}</p>
+            <button
+              onClick={() => setNotification(null)}
+              className="text-lg leading-none opacity-60 hover:opacity-100 transition"
+            >
+              ×
+            </button>
           </div>
         </div>
       )}

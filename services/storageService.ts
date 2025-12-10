@@ -443,6 +443,7 @@ export const searchUsers = async (query: string): Promise<FriendData[]> => {
     const { data: profiles, error } = await supabase
       .from('profiles')
       .select('id, name, email')
+      .eq('is_discoverable', true)
       .or(`name.ilike.%${query}%,email.ilike.%${query}%`)
       .limit(20);
 
@@ -624,11 +625,12 @@ export const getFriends = async (): Promise<FriendData[]> => {
 
     const friendIds = friendships.map(f => f.friend_id);
 
-    // Get all friends data
+    // Get all friends data - only include users who are still discoverable
     const { data: friendProfiles } = await supabase
       .from('profiles')
       .select('id, name')
-      .in('id', friendIds);
+      .in('id', friendIds)
+      .eq('is_discoverable', true);
 
     const enrichedFriends: FriendData[] = await Promise.all(
       (friendProfiles || []).map(async (profile: any) => {
@@ -702,5 +704,69 @@ export const getFriends = async (): Promise<FriendData[]> => {
   } catch (error) {
     console.error('Failed to get friends:', error);
     return [];
+  }
+};
+
+export const getUserVisibility = async (): Promise<boolean> => {
+  const userId = await getUserId();
+  if (!userId) return true;
+
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('is_discoverable')
+      .eq('id', userId)
+      .single();
+
+    if (error) throw error;
+    return data?.is_discoverable ?? true;
+  } catch (error) {
+    console.error('Failed to get user visibility:', error);
+    return true; // Default to discoverable
+  }
+};
+
+export const updateUserVisibility = async (isDiscoverable: boolean): Promise<boolean> => {
+  const userId = await getUserId();
+  if (!userId) {
+    console.error('No user ID found - cannot update visibility');
+    return false;
+  }
+
+  try {
+    console.log(`Updating visibility for user ${userId} to ${isDiscoverable}`);
+    const { error, data } = await supabase
+      .from('profiles')
+      .update({ is_discoverable: isDiscoverable })
+      .eq('id', userId);
+
+    if (error) {
+      console.error('Supabase update error:', error);
+      throw error;
+    }
+    console.log('Visibility updated successfully');
+    return true;
+  } catch (error) {
+    console.error('Failed to update user visibility:', error);
+    return false;
+  }
+};
+
+export const getUserName = async (): Promise<string | null> => {
+  const userId = await getUserId();
+  if (!userId) return null;
+
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('name')
+      .eq('id', userId)
+      .single();
+
+    if (error) throw error;
+    return data?.name || null;
+  } catch (error) {
+    console.error('Failed to get user name:', error);
+    return null;
   }
 };
