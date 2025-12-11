@@ -14,6 +14,7 @@ import { ConfirmationModal } from './components/ConfirmationModal';
 import { ProductivityChart, NeuralBalanceRadar, ActivityHeatmap, GoalCategoryChart } from './components/Charts';
 import Auth from './components/Auth';
 import Notification from './components/Notification';
+import LoadingScreen from './components/LoadingScreen';
 import ReactMarkdown from 'react-markdown';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -485,6 +486,8 @@ export default function App() {
   };
 
   if (!user) return <Auth onAuthSuccess={() => {}} />;
+
+  if (!dataLoaded) return <LoadingScreen />;
 
   return (
     <div className={`lg:flex h-screen bg-slate-50 text-slate-900 font-sans selection:bg-indigo-100 overflow-auto lg:overflow-hidden ${isSidebarOpen ? 'overflow-hidden' : ''}`}>
