@@ -24,6 +24,7 @@ export interface DailyEntry {
   moodScore: number; // Calculated or user input (1-10)
   completedCount: number;
   totalCount: number;
+  repeatDaily?: boolean; // Flag to repeat this day's tasks every day
 }
 
 export interface UserProfile {

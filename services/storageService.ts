@@ -42,7 +42,8 @@ export const getDB = async (): Promise<AppData> => {
         journal: entry.journal || '',
         moodScore: entry.mood_score || 0,
         completedCount: entry.completed_count || 0,
-        totalCount: entry.total_count || 0
+        totalCount: entry.total_count || 0,
+        repeatDaily: entry.repeat_daily || false
       };
     });
 
@@ -124,7 +125,9 @@ export const saveDB = async (data: AppData) => {
         .upsert(entry, { onConflict: 'user_id,date' });
     }
 
-    // Upsert goals
+    // Upsert goals - delete and re-insert to avoid conflicts
+    await supabase.from('goals').delete().eq('user_id', userId);
+    
     const goalEntries = data.goals.map(goal => ({
       id: goal.id,
       user_id: userId,
@@ -137,10 +140,12 @@ export const saveDB = async (data: AppData) => {
       tasks: goal.tasks
     }));
 
-    for (const goal of goalEntries) {
-      await supabase
-        .from('goals')
-        .upsert(goal, { onConflict: 'id' });
+    if (goalEntries.length > 0) {
+      const { error } = await supabase.from('goals').insert(goalEntries);
+      if (error) {
+        console.error('Error inserting goals:', error);
+        throw error;
+      }
     }
 
     // Upsert analytics
@@ -265,25 +270,46 @@ export const saveGoals = async (goals: Goal[]): Promise<AppData> => {
   const userId = await getUserId();
   if (!userId) return DEFAULT_DATA;
 
-  // Delete existing goals
-  await supabase.from('goals').delete().eq('user_id', userId);
+  try {
+    // Delete existing goals first
+    const { error: deleteError } = await supabase
+      .from('goals')
+      .delete()
+      .eq('user_id', userId);
+    
+    if (deleteError) {
+      console.error('Error deleting goals:', deleteError);
+    }
 
-  // Insert new goals
-  const goalEntries = goals.map(goal => ({
-    id: goal.id,
-    user_id: userId,
-    title: goal.title,
-    description: goal.description,
-    type: goal.type,
-    deadline: goal.deadline,
-    completed: goal.completed,
-    progress: goal.progress,
-    tasks: goal.tasks
-  }));
+    // Insert new goals
+    const goalEntries = goals.map(goal => ({
+      id: goal.id,
+      user_id: userId,
+      title: goal.title,
+      description: goal.description,
+      type: goal.type,
+      deadline: goal.deadline,
+      completed: goal.completed,
+      progress: goal.progress,
+      tasks: goal.tasks
+    }));
 
-  await supabase.from('goals').insert(goalEntries);
+    if (goalEntries.length > 0) {
+      const { error: insertError } = await supabase
+        .from('goals')
+        .insert(goalEntries);
+      
+      if (insertError) {
+        console.error('Error inserting goals:', insertError);
+        throw insertError;
+      }
+    }
 
-  return await getDB();
+    return await getDB();
+  } catch (error) {
+    console.error('Failed to save goals:', error);
+    throw error;
+  }
 };
 
 export const addAnalysis = async (analysis: AIAnalysis): Promise<AppData> => {
@@ -610,6 +636,87 @@ export const disconnectFriend = async (friendId: string): Promise<boolean> => {
   }
 };
 
+// Get a single friend's details
+export const getFriendDetails = async (friendId: string): Promise<FriendData | null> => {
+  try {
+    // Get friend profile
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, name, email')
+      .eq('id', friendId)
+      .single();
+
+    if (profileError || !profile) {
+      console.error('Failed to fetch friend profile:', profileError);
+      return null;
+    }
+
+    // Get today's date
+    const today = new Date().toISOString().split('T')[0];
+    const { data: todayEntry } = await supabase
+      .from('daily_entries')
+      .select('*')
+      .eq('user_id', friendId)
+      .eq('date', today)
+      .single();
+
+    // Calculate streak - count days where ALL tasks are completed
+    const { data: allEntries } = await supabase
+      .from('daily_entries')
+      .select('date, total_count, completed_count')
+      .eq('user_id', friendId)
+      .order('date', { ascending: false });
+
+    let streak = 0;
+    if (allEntries && allEntries.length > 0) {
+      const today = new Date();
+      
+      for (let i = 0; i < 365; i++) {
+        const d = new Date(today);
+        d.setDate(d.getDate() - i);
+        const dateStr = d.toISOString().split('T')[0];
+        
+        // Find entry for this date
+        const entry = allEntries.find(e => e.date === dateStr);
+        
+        // Day is complete if it has tasks and all are completed
+        const isComplete = entry && entry.total_count > 0 && entry.completed_count === entry.total_count;
+        
+        if (i === 0) {
+          if (isComplete) streak++;
+        } else {
+          if (isComplete) streak++;
+          else break;
+        }
+      }
+    }
+
+    // Get active goals
+    const { data: goalsData } = await supabase
+      .from('goals')
+      .select('type, completed')
+      .eq('user_id', friendId)
+      .eq('completed', false);
+
+    const activeShortTermGoals = goalsData?.filter(g => g.type === 'short-term').length || 0;
+    const activeLongTermGoals = goalsData?.filter(g => g.type === 'long-term').length || 0;
+
+    return {
+      id: friendId,
+      name: profile.name || 'Unknown User',
+      email: profile.email || '',
+      streak,
+      todayTaskCount: todayEntry?.total_count || 0,
+      todayTasks: todayEntry?.todos || [],
+      activeShortTermGoals,
+      activeLongTermGoals
+    };
+  } catch (error) {
+    console.error('Failed to get friend details:', error);
+    return null;
+  }
+};
+
 // Get user's friends list
 export const getFriends = async (): Promise<FriendData[]> => {
   const userId = await getUserId();
@@ -768,5 +875,60 @@ export const getUserName = async (): Promise<string | null> => {
   } catch (error) {
     console.error('Failed to get user name:', error);
     return null;
+  }
+};
+
+export const getYesterdayRepeatTasks = async (): Promise<Todo[] | null> => {
+  const userId = await getUserId();
+  if (!userId) return null;
+
+  try {
+    // Get yesterday's date
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+    // Fetch yesterday's entry
+    const { data, error } = await supabase
+      .from('daily_entries')
+      .select('todos, repeat_daily')
+      .eq('user_id', userId)
+      .eq('date', yesterdayStr)
+      .single();
+
+    if (error || !data) return null;
+
+    // If repeat_daily is true, return yesterday's tasks (reset completed status)
+    if (data.repeat_daily && data.todos && data.todos.length > 0) {
+      return data.todos.map((todo: any) => ({
+        id: todo.id,
+        text: todo.text,
+        completed: false // Reset to incomplete for new day
+      }));
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Failed to get yesterday repeat tasks:', error);
+    return null;
+  }
+};
+
+export const updateRepeatDaily = async (date: string, repeatDaily: boolean): Promise<boolean> => {
+  const userId = await getUserId();
+  if (!userId) return false;
+
+  try {
+    const { error } = await supabase
+      .from('daily_entries')
+      .update({ repeat_daily: repeatDaily })
+      .eq('user_id', userId)
+      .eq('date', date);
+
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Failed to update repeat daily status:', error);
+    return false;
   }
 };

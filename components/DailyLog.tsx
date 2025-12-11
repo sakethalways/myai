@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { DailyEntry, Todo, Goal } from '../types';
-import { Plus, Trash2, CheckCircle, Circle, Save, Briefcase, Calendar, History, Clock, FileText } from 'lucide-react';
-import { v4 as uuidv4 } from 'uuid'; 
+import { Plus, Trash2, CheckCircle, Circle, Save, Briefcase, Calendar, History, Clock, FileText, RotateCw } from 'lucide-react';
+import { v4 as uuidv4 } from 'uuid';
+import * as db from '../services/storageService'; 
 
 interface DailyLogProps {
   date: string;
@@ -21,12 +22,40 @@ const DailyLog: React.FC<DailyLogProps> = ({ date, entry, goals, onSave, onDelet
   const [newTodoText, setNewTodoText] = useState('');
   const [selectedGoalId, setSelectedGoalId] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
+  const [repeatDaily, setRepeatDaily] = useState(entry.repeatDaily || false);
+  const [isTogglingRepeat, setIsTogglingRepeat] = useState(false);
+  const [repeatNotification, setRepeatNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   
-  // Sync state when entry prop changes (handled via key in parent, but good for safety)
+  // Sync state when entry prop changes
   useEffect(() => {
     setTodos(entry.todos || []);
     setJournal(entry.journal || '');
+    setRepeatDaily(entry.repeatDaily || false);
   }, [entry]);
+
+  // Auto-dismiss notification after 3 seconds
+  useEffect(() => {
+    if (repeatNotification) {
+      const timer = setTimeout(() => {
+        setRepeatNotification(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [repeatNotification]);
+
+  // Load yesterday's repeat tasks on component mount if today's entry is new
+  useEffect(() => {
+    const loadRepeatTasks = async () => {
+      if (todos.length === 0) { // Only if entry is empty
+        const repeatTasks = await db.getYesterdayRepeatTasks();
+        if (repeatTasks && repeatTasks.length > 0) {
+          setTodos(repeatTasks);
+        }
+      }
+    };
+    
+    loadRepeatTasks();
+  }, [date]);
 
   const handleAddTodo = (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,9 +99,44 @@ const DailyLog: React.FC<DailyLogProps> = ({ date, entry, goals, onSave, onDelet
       todos: currentTodos,
       journal: currentJournal,
       completedCount,
-      totalCount: currentTodos.length
+      totalCount: currentTodos.length,
+      repeatDaily
     });
     setTimeout(() => setIsSaving(false), 500);
+  };
+
+  const handleToggleRepeatDaily = async () => {
+    setIsTogglingRepeat(true);
+    try {
+      const newRepeatStatus = !repeatDaily;
+      const success = await db.updateRepeatDaily(date, newRepeatStatus);
+      if (success) {
+        setRepeatDaily(newRepeatStatus);
+        // Show notification
+        const message = newRepeatStatus
+          ? '✅ Repeat enabled! Same tasks will appear tomorrow'
+          : '⏹️ Repeat disabled! Tasks won\'t repeat anymore';
+        setRepeatNotification({
+          message,
+          type: 'success'
+        });
+        // DON'T call onSave here - it triggers duplicate notifications
+        // The repeat_daily flag is updated directly in database
+      } else {
+        setRepeatNotification({
+          message: '❌ Failed to update repeat status',
+          type: 'error'
+        });
+      }
+    } catch (error) {
+      console.error('Failed to toggle repeat daily:', error);
+      setRepeatNotification({
+        message: '❌ Error updating repeat status',
+        type: 'error'
+      });
+    } finally {
+      setIsTogglingRepeat(false);
+    }
   };
 
   const handleManualSave = () => {
@@ -90,6 +154,17 @@ const DailyLog: React.FC<DailyLogProps> = ({ date, entry, goals, onSave, onDelet
 
   return (
     <div className="flex flex-col xl:flex-row gap-4 md:gap-8 h-full">
+      
+      {/* Repeat Notification Toast */}
+      {repeatNotification && (
+        <div className={`fixed top-4 right-4 left-4 md:left-auto md:top-6 md:right-6 px-4 py-3 rounded-lg font-bold text-sm shadow-lg animate-in slide-in-from-top-4 z-50 ${
+          repeatNotification.type === 'success'
+            ? 'bg-emerald-100 text-emerald-700 border border-emerald-300'
+            : 'bg-red-100 text-red-700 border border-red-300'
+        }`}>
+          {repeatNotification.message}
+        </div>
+      )}
 
       {/* LEFT: Task & Journal Area */}
       <div className="flex-1 flex flex-col gap-4 md:gap-6 overflow-hidden">
@@ -118,13 +193,34 @@ const DailyLog: React.FC<DailyLogProps> = ({ date, entry, goals, onSave, onDelet
           <div className="flex-1 overflow-y-auto custom-scrollbar space-y-6 pb-10">
             {/* Todo Section */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                <div className="p-4 border-b border-slate-100 bg-slate-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-3">
                     <h3 className="font-bold text-slate-700 flex items-center gap-2">
                         <CheckCircle size={16} className="text-indigo-500" /> Daily Protocol
                     </h3>
-                    <span className="text-xs font-mono bg-indigo-100 text-indigo-700 px-2 py-1 rounded">
-                        {todos.filter(t => t.completed).length} / {todos.length} Done
-                    </span>
+                    <div className="flex items-center gap-2 sm:gap-3 ml-auto overflow-x-auto">
+                        <span className="text-xs font-mono bg-indigo-100 text-indigo-700 px-2 py-1 rounded whitespace-nowrap flex-shrink-0">
+                            {todos.filter(t => t.completed).length} / {todos.length} Done
+                        </span>
+                        
+                        {/* Repeat Daily Toggle Button */}
+                        <button
+                            onClick={handleToggleRepeatDaily}
+                            disabled={isTogglingRepeat}
+                            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg font-bold text-xs sm:text-sm transition whitespace-nowrap flex-shrink-0 ${
+                                repeatDaily
+                                    ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+                                    : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
+                            } disabled:opacity-50 disabled:cursor-not-allowed`}
+                            title={repeatDaily ? 'Tasks will repeat daily' : 'Click to repeat daily'}
+                        >
+                            {isTogglingRepeat ? (
+                                <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                            ) : (
+                                <RotateCw size={14} />
+                            )}
+                            <span>{repeatDaily ? 'Repeat ON' : 'Repeat OFF'}</span>
+                        </button>
+                    </div>
                 </div>
                 <div className="p-6">
                     <form onSubmit={handleAddTodo} className="mb-6 space-y-3">

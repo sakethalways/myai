@@ -26,6 +26,7 @@ const Friends: React.FC<FriendsProps> = ({ userStreak, userTodayTaskCount, confi
   const [connectedIds, setConnectedIds] = useState<Set<string>>(new Set());
   const [isSearching, setIsSearching] = useState(false);
   const [isLoadingFriends, setIsLoadingFriends] = useState(true);
+  const [connectingFriendId, setConnectingFriendId] = useState<string | null>(null);
   const [selectedFriend, setSelectedFriend] = useState<FriendData | null>(null);
   const [isDiscoverable, setIsDiscoverable] = useState(true);
   const [isUpdatingVisibility, setIsUpdatingVisibility] = useState(false);
@@ -146,16 +147,22 @@ const Friends: React.FC<FriendsProps> = ({ userStreak, userTodayTaskCount, confi
   };
 
   const handleConnect = async (friend: FriendData) => {
+    setConnectingFriendId(friend.id);
     const success = await db.connectFriend(friend.id);
     if (success) {
-      setConnectedIds(prev => new Set([...prev, friend.id]));
-      setSearchResults(prev => prev.filter(r => r.id !== friend.id));
-      setFriends(prev => {
-        const updated = [...prev, friend];
-        return updated.sort((a, b) => b.streak - a.streak);
-      });
-      setSearchQuery('');
+      // Fetch fresh friend data after connection
+      const freshFriendData = await db.getFriendDetails(friend.id);
+      if (freshFriendData) {
+        setConnectedIds(prev => new Set([...prev, friend.id]));
+        setSearchResults(prev => prev.filter(r => r.id !== friend.id));
+        setFriends(prev => {
+          const updated = [...prev, freshFriendData];
+          return updated.sort((a, b) => b.streak - a.streak);
+        });
+        setSearchQuery('');
+      }
     }
+    setConnectingFriendId(null);
   };
 
   const handleDisconnect = (friend: FriendData) => {
@@ -281,10 +288,21 @@ const Friends: React.FC<FriendsProps> = ({ userStreak, userTodayTaskCount, confi
                         </div>
                         <button
                           onClick={() => handleConnect(friend)}
-                          className="flex-shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1 whitespace-nowrap"
+                          disabled={connectingFriendId === friend.id}
+                          className="flex-shrink-0 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1 whitespace-nowrap disabled:cursor-not-allowed"
                         >
-                          <UserPlus size={12} />
-                          Add
+                          {connectingFriendId === friend.id ? (
+                            <>
+                              <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                              <span className="hidden sm:inline">Adding...</span>
+                            </>
+                          ) : (
+                            <>
+                              <UserPlus size={12} />
+                              <span className="hidden sm:inline">Add</span>
+                              <span className="sm:hidden">+</span>
+                            </>
+                          )}
                         </button>
                       </div>
                     ))}
