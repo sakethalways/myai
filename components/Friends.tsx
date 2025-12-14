@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, UserPlus, UserMinus, Flame, Target, CheckCircle2, Circle, ChevronRight, ArrowLeft, Mail, TrendingUp, Trophy, Calendar, Zap, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { Search, UserPlus, UserMinus, Flame, Target, CheckCircle2, Circle, ChevronRight, ArrowLeft, Mail, TrendingUp, Trophy, Calendar, Zap, AlertCircle, Eye, EyeOff, Share2, Copy, Check } from 'lucide-react';
 import * as db from '../services/storageService';
 
 interface FriendData {
@@ -32,6 +32,8 @@ const Friends: React.FC<FriendsProps> = ({ userStreak, userTodayTaskCount, confi
   const [isUpdatingVisibility, setIsUpdatingVisibility] = useState(false);
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [userName, setUserName] = useState<string>('You');
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   // Load friends and user visibility status on component mount
   useEffect(() => {
@@ -197,6 +199,52 @@ const Friends: React.FC<FriendsProps> = ({ userStreak, userTodayTaskCount, confi
     return { text: 'Same tasks', color: 'text-slate-600' };
   };
 
+  const copyToClipboard = (text: string) => {
+    // Try modern Clipboard API first
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(() => {
+        setCopied(true);
+        setNotification({
+          message: 'Link copied to clipboard!',
+          type: 'success'
+        });
+        setTimeout(() => setCopied(false), 2000);
+      }).catch(() => {
+        fallbackCopy(text);
+      });
+    } else {
+      // Fallback for older browsers or non-secure contexts
+      fallbackCopy(text);
+    }
+  };
+
+  const fallbackCopy = (text: string) => {
+    try {
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      textArea.style.top = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      
+      setCopied(true);
+      setNotification({
+        message: 'Link copied to clipboard!',
+        type: 'success'
+      });
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      setNotification({
+        message: 'Failed to copy link',
+        type: 'error'
+      });
+    }
+  };
+
   return (
     <>
       {/* Main Friends List View */}
@@ -209,6 +257,14 @@ const Friends: React.FC<FriendsProps> = ({ userStreak, userTodayTaskCount, confi
                 <UserPlus className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
               <h1 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-indigo-600 to-indigo-700 dark:from-indigo-400 dark:to-indigo-500 bg-clip-text text-transparent">Friends</h1>
+              <button
+                onClick={() => setShowInviteModal(true)}
+                className="ml-auto flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg font-bold text-xs sm:text-sm bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-900/50 transition"
+                title="Invite friends to NeuroTrack"
+              >
+                <Share2 className="w-4 h-4" />
+                <span className="hidden sm:inline">Invite</span>
+              </button>
             </div>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 ml-8 sm:ml-10">Connect and compare progress with friends</p>
           </div>
@@ -605,12 +661,78 @@ const Friends: React.FC<FriendsProps> = ({ userStreak, userTodayTaskCount, confi
         </div>
       )}
 
+      {/* Invite Modal */}
+      {showInviteModal && (
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center p-4 z-50 animate-in fade-in">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full animate-in zoom-in-95 border border-slate-200 dark:border-slate-700">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-purple-500 to-purple-600 dark:from-purple-600 dark:to-purple-700 p-4 sm:p-6 rounded-t-2xl">
+              <div className="flex items-center gap-3">
+                <div className="bg-white/20 p-2.5 rounded-lg">
+                  <Share2 className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-lg sm:text-xl font-bold text-white">Invite Friends</h2>
+                  <p className="text-xs sm:text-sm text-purple-100">Grow your community</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-4 sm:p-6">
+              <div className="mb-6">
+                <h3 className="text-slate-800 dark:text-slate-100 font-bold text-base sm:text-lg mb-2">Invite your friends to this app</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Share the link and be productive together! Track your progress, set goals, and compete with your friends on NeuroTrack AI.</p>
+              </div>
+
+              {/* Link Box */}
+              <div className="mb-4">
+                <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wide block mb-2">Share Link</label>
+                <div className="flex gap-2">
+                  <div className="flex-1 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2.5 sm:py-3 flex items-center text-xs sm:text-sm text-slate-700 dark:text-slate-300 truncate">
+                    neurotracking.vercel.app
+                  </div>
+                  <button
+                    onClick={() => copyToClipboard('https://neurotracking.vercel.app')}
+                    className={`flex-shrink-0 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg font-bold text-xs sm:text-sm transition flex items-center gap-2 ${
+                      copied
+                        ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
+                        : 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-900/50'
+                    }`}
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="w-4 h-4" />
+                        <span className="hidden sm:inline">Copied</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-4 h-4" />
+                        <span className="hidden sm:inline">Copy</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Close Button */}
+              <button
+                onClick={() => setShowInviteModal(false)}
+                className="w-full px-4 py-2.5 sm:py-3 rounded-lg font-bold text-sm bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Notification Toast */}
       {notification && (
         <div className={`fixed bottom-6 right-6 left-6 sm:left-auto sm:w-96 p-4 rounded-lg shadow-lg border animate-in slide-in-from-bottom-5 transition-all duration-300 z-50 ${
           notification.type === 'success'
-            ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-300'
-            : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-900/50 text-red-800 dark:text-red-300'
+            ? 'bg-emerald-50 dark:bg-emerald-950 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300'
+            : 'bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800 text-red-800 dark:text-red-300'
         }`}>
           <div className="flex items-center gap-3">
             <div className={`w-2 h-2 rounded-full ${
