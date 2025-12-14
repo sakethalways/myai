@@ -197,6 +197,44 @@ export const ActivityHeatmap: React.FC<{ history: Record<string, DailyEntry> }> 
         return data;
     };
 
+    const getDateRange = () => {
+        const today = new Date();
+        let startDate = new Date(today);
+        
+        if (view === 'week') {
+            startDate.setDate(today.getDate() - 6);
+        } else if (view === 'month') {
+            startDate.setDate(today.getDate() - 29);
+        }
+        // For year, it's 365 days
+        
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        
+        if (view === 'week') {
+            const startMonth = monthNames[startDate.getMonth()];
+            const startDay = startDate.getDate();
+            const endMonth = monthNames[today.getMonth()];
+            const endDay = today.getDate();
+            
+            if (startMonth === endMonth) {
+                return `Last 7 Days: ${startMonth} ${startDay}-${endDay}`;
+            } else {
+                return `Last 7 Days: ${startMonth} ${startDay} - ${endMonth} ${endDay}`;
+            }
+        } else if (view === 'month') {
+            const month = monthNames[today.getMonth()];
+            return `This Month: ${month} ${today.getFullYear()}`;
+        } else {
+            const startYear = startDate.getFullYear();
+            const endYear = today.getFullYear();
+            if (startYear === endYear) {
+                return `This Year: ${endYear}`;
+            } else {
+                return `Year View: ${startYear} - ${endYear}`;
+            }
+        }
+    };
+
     const heatmapData = generateData();
 
     const getColor = (intensity: number) => {
@@ -212,22 +250,30 @@ export const ActivityHeatmap: React.FC<{ history: Record<string, DailyEntry> }> 
 
     return (
         <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 col-span-1 lg:col-span-2 min-w-0">
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-                <h3 className="text-sm font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
-                     <span className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400"></span> Consistency Map
-                </h3>
-                <div className="flex bg-slate-100 dark:bg-slate-700 rounded-lg p-1 self-start sm:self-auto">
-                    {['week', 'month', 'year'].map((v) => (
-                        <button
-                            key={v}
-                            onClick={() => setView(v as any)}
-                            className={`px-2 py-1 text-xs font-bold rounded-md transition capitalize ${
-                                view === v ? 'bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
-                            }`}
-                        >
-                            {v}
-                        </button>
-                    ))}
+            <div className="flex flex-col gap-4 mb-6">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+                    <div>
+                        <h3 className="text-sm font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+                             <span className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400"></span> Consistency Map
+                        </h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 ml-4">{getDateRange()}</p>
+                    </div>
+                    <div className="flex bg-slate-100 dark:bg-slate-700 rounded-lg p-1 self-start sm:self-auto">
+                        {['week', 'month', 'year'].map((v) => (
+                            <button
+                                key={v}
+                                onClick={() => setView(v as any)}
+                                className={`px-2 py-1 text-xs font-bold rounded-md transition capitalize ${
+                                    view === v ? 'bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
+                                }`}
+                            >
+                                {v}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+                <div className="text-[10px] text-slate-400 dark:text-slate-500">
+                    <p>← Older &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Newer →</p>
                 </div>
             </div>
             
@@ -236,7 +282,7 @@ export const ActivityHeatmap: React.FC<{ history: Record<string, DailyEntry> }> 
                     <div 
                         key={d.date} 
                         title={`${d.date}: Level ${d.intensity}`}
-                        className={`${view === 'year' ? 'w-2.5 h-2.5' : view === 'month' ? 'w-8 h-8' : 'w-10 h-10'} rounded-sm ${getColor(d.intensity)} transition hover:scale-110 cursor-pointer border border-white`}
+                        className={`${view === 'year' ? 'w-2.5 h-2.5' : view === 'month' ? 'w-8 h-8' : 'w-10 h-10'} rounded-sm ${getColor(d.intensity)} transition hover:scale-110 cursor-pointer border border-white dark:border-slate-700`}
                     />
                 ))}
             </div>
