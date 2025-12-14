@@ -3,7 +3,7 @@ import { BrainCircuit } from 'lucide-react';
 
 const LoadingScreen: React.FC = () => {
   return (
-    <div className="flex items-center justify-center h-screen w-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="flex items-center justify-center h-screen w-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       <div className="flex flex-col items-center gap-8 px-4">
         {/* Logo with Animation */}
         <div className="relative w-24 h-24 sm:w-28 sm:h-28">
@@ -18,21 +18,21 @@ const LoadingScreen: React.FC = () => {
 
         {/* Text Content */}
         <div className="text-center space-y-3">
-          <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">
+          <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400 bg-clip-text text-transparent">
             NeuroTrack
           </h1>
-          <p className="text-slate-600 font-medium text-sm sm:text-base">Loading your dashboard...</p>
+          <p className="text-slate-600 dark:text-slate-400 font-medium text-sm sm:text-base">Loading your dashboard...</p>
         </div>
 
         {/* Loading Dots */}
         <div className="flex gap-2">
-          <div className="w-2 h-2 sm:w-3 sm:h-3 bg-indigo-600 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
-          <div className="w-2 h-2 sm:w-3 sm:h-3 bg-indigo-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-          <div className="w-2 h-2 sm:w-3 sm:h-3 bg-indigo-600 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+          <div className="w-2 h-2 sm:w-3 sm:h-3 bg-indigo-600 dark:bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
+          <div className="w-2 h-2 sm:w-3 sm:h-3 bg-indigo-600 dark:bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+          <div className="w-2 h-2 sm:w-3 sm:h-3 bg-indigo-600 dark:bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
         </div>
 
         {/* Loading percentage (optional) */}
-        <p className="text-xs text-slate-500 mt-2">Syncing your data...</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">Syncing your data...</p>
       </div>
     </div>
   );

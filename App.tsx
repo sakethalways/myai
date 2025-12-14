@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import DarkModeToggle from './components/DarkModeToggle';
 import { BookOpen, User, Target, BrainCircuit, LayoutDashboard, Menu, X, Download, Zap, TrendingUp, CalendarCheck, Flame, Bot, Star, PartyPopper, AlertTriangle, CheckCircle, Users } from 'lucide-react';
 import { AppData, DEFAULT_DATA, DailyEntry, AIAnalysis } from './types';
 import * as db from './services/storageService';
@@ -18,30 +19,48 @@ import LoadingScreen from './components/LoadingScreen';
 import ReactMarkdown from 'react-markdown';
 import { v4 as uuidv4 } from 'uuid';
 
+
 export default function App() {
-  const [user, setUser] = useState<any>(null);
-  const [data, setData] = useState<AppData>(DEFAULT_DATA);
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [aiReport, setAiReport] = useState<string | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1024);
-  const [dataLoaded, setDataLoaded] = useState(false);
-  const [showProfilePopup, setShowProfilePopup] = useState(false);
-  
-  // New States for Celebration Popup
-  const [showCelebration, setShowCelebration] = useState(false);
-  const [celebrationType, setCelebrationType] = useState<'weekly' | 'monthly'>('weekly');
+    const [user, setUser] = useState<any>(null);
+    const [data, setData] = useState<AppData>(DEFAULT_DATA);
+    const [activeTab, setActiveTab] = useState('dashboard');
+    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+    const [aiReport, setAiReport] = useState<string | null>(null);
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1024);
+    const [dataLoaded, setDataLoaded] = useState(false);
+    const [showProfilePopup, setShowProfilePopup] = useState(false);
+    const [darkMode, setDarkMode] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('theme') === 'dark';
+        }
+        return false;
+    });
 
-  // Success Notification State
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    // New States for Celebration Popup
+    const [showCelebration, setShowCelebration] = useState(false);
+    const [celebrationType, setCelebrationType] = useState<'weekly' | 'monthly'>('weekly');
 
-  // Global Confirmation Modal State
-  const [confirmModal, setConfirmModal] = useState<{isOpen: boolean, message: string, onConfirm: () => void}>({
-      isOpen: false,
-      message: '',
-      onConfirm: () => {}
-  });
+    // Success Notification State
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+    // Global Confirmation Modal State
+    const [confirmModal, setConfirmModal] = useState<{isOpen: boolean, message: string, onConfirm: () => void}>({
+            isOpen: false,
+            message: '',
+            onConfirm: () => {}
+    });
+
+    // Apply dark mode class to html root
+    useEffect(() => {
+        if (darkMode) {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+        }
+    }, [darkMode]);
 
   const triggerConfirm = (message: string, onConfirm: () => void) => {
       setConfirmModal({ isOpen: true, message, onConfirm });
@@ -349,72 +368,72 @@ export default function App() {
       switch(activeTab) {
           case 'dashboard':
               return (
-                <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500">
-                    <div className="bg-gradient-to-br from-violet-600 via-indigo-600 to-blue-600 rounded-3xl p-4 md:p-8 text-white shadow-2xl relative overflow-hidden">
-                         <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+                <div className="space-y-4 md:space-y-6 animate-in fade-in duration-500">
+                    <div className="bg-gradient-to-br from-violet-600 via-indigo-600 to-blue-600 dark:from-slate-800 dark:via-slate-900 dark:to-slate-900 rounded-3xl p-4 md:p-6 text-white dark:text-slate-100 shadow-2xl relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 dark:bg-slate-700 dark:opacity-10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
 
-                         <div className="flex flex-col md:flex-row gap-6 md:gap-8 relative z-10">
+                         <div className="flex flex-col md:flex-row gap-4 md:gap-6 relative z-10">
                              <div className="flex-1">
                                  <h2 className="text-2xl md:text-3xl font-bold mb-2 tracking-tight">Welcome Back, {data.profile.name || 'NeuroTrack User'}</h2>
                                  <p className="text-indigo-100 text-base md:text-lg mb-4 md:mb-6 max-w-xl">
                                      You have <span className="font-bold text-white bg-white/20 px-2 rounded">{incompleteTodos}</span> pending tasks on your protocol today. Consistency is the key to neural adaptation.
                                  </p>
 
-                                 <div className="flex flex-wrap gap-3 md:gap-4">
-                                     <div className="bg-white/10 backdrop-blur-md px-3 md:px-4 py-2 md:py-3 rounded-xl flex items-center gap-2 md:gap-3 border border-white/10 group hover:bg-orange-500/20 transition-colors">
-                                         <div className="bg-orange-500/20 p-1.5 md:p-2 rounded-lg text-orange-300 group-hover:text-orange-100 group-hover:scale-110 transition-transform">
-                                             <Flame size={18} fill={currentStreak > 0 ? "currentColor" : "none"} />
+                                 <div className="flex flex-wrap gap-2 md:gap-3">
+                                     <div className="bg-white/10 dark:bg-orange-900/20 backdrop-blur-md px-3 md:px-4 py-2 md:py-3 rounded-xl flex items-center gap-2 md:gap-3 border border-white/10 dark:border-orange-900/30 group hover:bg-orange-500/20 dark:hover:bg-orange-800/30 transition-colors">
+                                         <div className="bg-orange-500/20 dark:bg-orange-800/40 p-1.5 md:p-2 rounded-lg text-orange-300 dark:text-orange-200 group-hover:text-orange-100 group-hover:scale-110 transition-transform">
+                                             <Flame size={18} fill={currentStreak > 0 ? 'currentColor' : 'none'} />
                                          </div>
                                          <div>
-                                            <span className="block font-bold text-lg md:text-xl leading-none text-white">{currentStreak}</span>
-                                            <span className="text-xs text-orange-100/70">Day Streak</span>
+                                            <span className="block font-bold text-lg md:text-xl leading-none text-white dark:text-orange-100">{currentStreak}</span>
+                                            <span className="text-xs text-orange-100/70 dark:text-orange-200/70">Day Streak</span>
                                          </div>
                                      </div>
 
-                                     <div className="bg-white/10 backdrop-blur-md px-3 md:px-4 py-2 md:py-3 rounded-xl flex items-center gap-2 md:gap-3 border border-white/10">
-                                         <div className="bg-white/20 p-1.5 md:p-2 rounded-lg"><Target size={18} /></div>
+                                     <div className="bg-white/10 dark:bg-slate-900/40 backdrop-blur-md px-3 md:px-4 py-2 md:py-3 rounded-xl flex items-center gap-2 md:gap-3 border border-white/10 dark:border-slate-800">
+                                         <div className="bg-white/50 dark:bg-slate-800 p-1.5 md:p-2 rounded-lg"><Target size={18} className="text-white dark:text-indigo-300" /></div>
                                          <div>
-                                            <span className="block font-bold text-lg md:text-xl leading-none">{data.goals.filter(g => !g.completed).length}</span>
-                                            <span className="text-xs text-indigo-200">Active Goals</span>
+                                            <span className="block font-bold text-lg md:text-xl leading-none text-white dark:text-indigo-100">{data.goals.filter(g => !g.completed).length}</span>
+                                            <span className="text-xs text-indigo-200 dark:text-indigo-300">Active Goals</span>
                                          </div>
                                      </div>
-                                     <div className="bg-white/10 backdrop-blur-md px-3 md:px-4 py-2 md:py-3 rounded-xl flex items-center gap-2 md:gap-3 border border-white/10">
-                                         <div className="bg-white/20 p-1.5 md:p-2 rounded-lg"><CalendarCheck size={18} /></div>
+                                     <div className="bg-white/10 dark:bg-slate-900/40 backdrop-blur-md px-3 md:px-4 py-2 md:py-3 rounded-xl flex items-center gap-2 md:gap-3 border border-white/10 dark:border-slate-800">
+                                         <div className="bg-white/50 dark:bg-slate-800 p-1.5 md:p-2 rounded-lg"><CalendarCheck size={18} className="text-white dark:text-indigo-300" /></div>
                                          <div>
-                                            <span className="block font-bold text-lg md:text-xl leading-none">{Object.keys(data.history).length}</span>
-                                            <span className="text-xs text-indigo-200">Days Logged</span>
+                                            <span className="block font-bold text-lg md:text-xl leading-none text-white dark:text-indigo-100">{Object.keys(data.history).length}</span>
+                                            <span className="text-xs text-indigo-200 dark:text-indigo-300">Days Logged</span>
                                          </div>
                                      </div>
                                  </div>
                              </div>
 
-                             <div className="w-full md:w-80 bg-white/10 backdrop-blur-md rounded-2xl p-4 md:p-5 border border-white/20">
-                                 <h3 className="text-xs font-bold uppercase text-indigo-200 mb-3 flex items-center gap-2">
-                                     <Zap size={14} className="text-yellow-300" /> Today's Focus
+                             <div className="w-full md:w-80 bg-white/10 dark:bg-slate-900/60 backdrop-blur-md rounded-2xl p-4 md:p-5 border border-white/20 dark:border-slate-800">
+                                 <h3 className="text-xs font-bold uppercase text-indigo-200 dark:text-indigo-300 mb-3 flex items-center gap-2">
+                                     <Zap size={14} className="text-yellow-300 dark:text-yellow-200" /> Today's Focus
                                  </h3>
                                  <ul className="space-y-2">
                                      {todayEntry.todos && todayEntry.todos.slice(0, 3).map(t => (
-                                         <li key={t.id} className="flex items-center gap-2 md:gap-3 text-sm text-white">
-                                             <div className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${t.completed ? 'bg-emerald-400 border-emerald-400' : 'border-indigo-300'}`}>
-                                                 {t.completed && <div className="w-2 h-2 bg-white rounded-full"></div>}
+                                         <li key={t.id} className="flex items-center gap-2 md:gap-3 text-sm text-white dark:text-slate-100">
+                                             <div className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${t.completed ? 'bg-emerald-400 border-emerald-400 dark:bg-emerald-700 dark:border-emerald-700' : 'border-indigo-300 dark:border-indigo-700'}`}>
+                                                 {t.completed && <div className="w-2 h-2 bg-white dark:bg-slate-900 rounded-full"></div>}
                                              </div>
                                              <span className={`truncate ${t.completed ? 'opacity-50 line-through' : ''}`}>{t.text}</span>
                                          </li>
                                      ))}
                                      {(!todayEntry.todos || todayEntry.todos.length === 0) && (
-                                         <li className="text-indigo-200 text-xs italic text-center py-4 border border-dashed border-indigo-400/30 rounded-lg">
+                                         <li className="text-indigo-200 dark:text-indigo-400 text-xs italic text-center py-4 border border-dashed border-indigo-400/30 dark:border-indigo-700/30 rounded-lg">
                                              No tasks initialized.
                                          </li>
                                      )}
                                  </ul>
                                  {todayEntry.todos && todayEntry.todos.length > 3 && (
-                                     <p className="text-xs text-indigo-200 mt-3 text-center">+ {todayEntry.todos.length - 3} more tasks</p>
+                                     <p className="text-xs text-indigo-200 dark:text-indigo-400 mt-3 text-center">+ {todayEntry.todos.length - 3} more tasks</p>
                                  )}
                              </div>
                          </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                          <NeuralBalanceRadar data={data} />
                          <ProductivityChart history={data.history} />
                          <GoalCategoryChart goals={data.goals} type="short-term" color="indigo" />
@@ -489,25 +508,28 @@ export default function App() {
 
   if (!dataLoaded) return <LoadingScreen />;
 
-  return (
-    <div className={`lg:flex h-screen bg-slate-50 text-slate-900 font-sans selection:bg-indigo-100 overflow-auto lg:overflow-hidden ${isSidebarOpen ? 'overflow-hidden' : ''}`}>
+    return (
+        <div className={`lg:flex h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100 font-sans selection:bg-indigo-100 dark:selection:bg-indigo-900 overflow-auto lg:overflow-hidden ${isSidebarOpen ? 'overflow-hidden' : ''}`}>
 
-      {/* SIDEBAR */}
-      <aside className={`bg-slate-900 text-white flex flex-col transition-all duration-300 relative border-r border-slate-800 z-30 ${
-        // Mobile/Tablet: overlay mode (fixed positioning)
-        // Desktop: inline mode (static positioning)
-        isSidebarOpen
-          ? 'fixed lg:static w-64 translate-x-0 h-screen lg:h-full'
-          : 'fixed lg:static w-64 -translate-x-full lg:w-20 lg:translate-x-0 hidden lg:block h-screen lg:h-full'
-      }`}>
-        <div className="h-20 flex items-center justify-center border-b border-slate-800 relative bg-slate-950">
-             <div className="flex items-center gap-3">
-                 <div className="bg-gradient-to-tr from-indigo-600 to-violet-500 p-2 rounded-xl text-white shadow-lg shadow-indigo-900/50">
-                    <BrainCircuit size={24} />
-                 </div>
-                 {isSidebarOpen && <span className="font-bold text-lg tracking-wide text-indigo-50">NeuroTrack</span>}
-             </div>
-        </div>
+            {/* SIDEBAR */}
+            <aside className={`bg-slate-900 dark:bg-slate-800 text-white dark:text-slate-100 flex flex-col transition-all duration-300 relative border-r border-slate-800 dark:border-slate-700 z-30 ${
+                isSidebarOpen
+                    ? 'fixed lg:static w-64 translate-x-0 h-screen lg:h-full'
+                    : 'fixed lg:static w-64 -translate-x-full lg:w-20 lg:translate-x-0 hidden lg:block h-screen lg:h-full'
+            }`}>
+                <div className="h-20 flex items-center justify-between border-b border-slate-800 dark:border-slate-700 relative bg-slate-950 dark:bg-slate-900 px-4 overflow-hidden">
+                         <div className="flex items-center gap-3">
+                                 <div className="bg-gradient-to-tr from-indigo-600 to-violet-500 p-2 rounded-xl text-white shadow-lg shadow-indigo-900/50 flex-shrink-0">
+                                        <BrainCircuit size={24} />
+                                 </div>
+                                 {isSidebarOpen && <span className="font-bold text-lg tracking-wide text-indigo-50 dark:text-indigo-200">NeuroTrack</span>}
+                         </div>
+                         {isSidebarOpen && (
+                                 <div className="flex-shrink-0">
+                                        <DarkModeToggle darkMode={darkMode} setDarkMode={setDarkMode} />
+                                 </div>
+                         )}
+                </div>
 
         <nav className="flex-1 py-8 px-3 space-y-2 overflow-y-auto custom-scrollbar">
             {NAV_ITEMS.map((item) => {
@@ -530,12 +552,12 @@ export default function App() {
             })}
         </nav>
 
-        <div className="p-4 border-t border-slate-800 bg-slate-950 space-y-2">
-            <button onClick={() => db.exportData()} className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl text-slate-400 hover:bg-emerald-900/30 hover:text-emerald-400 transition ${!isSidebarOpen && 'justify-center'}`}>
+        <div className="p-4 border-t border-slate-800 dark:border-slate-700 bg-slate-950 dark:bg-slate-900 space-y-2">
+            <button onClick={() => db.exportData()} className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl text-slate-400 dark:text-slate-500 hover:bg-emerald-900/30 dark:hover:bg-emerald-900/40 hover:text-emerald-400 dark:hover:text-emerald-300 transition ${!isSidebarOpen && 'justify-center'}`}>
                 <Download size={20} />
                 {isSidebarOpen && <span className="font-medium text-sm">Export Data</span>}
             </button>
-            <button onClick={() => supabase.auth.signOut()} className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl text-slate-400 hover:bg-red-900/30 hover:text-red-400 transition ${!isSidebarOpen && 'justify-center'}`}>
+            <button onClick={() => supabase.auth.signOut()} className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl text-slate-400 dark:text-slate-500 hover:bg-red-900/30 dark:hover:bg-red-900/40 hover:text-red-400 dark:hover:text-red-300 transition ${!isSidebarOpen && 'justify-center'}`}>
                 <X size={20} />
                 {isSidebarOpen && <span className="font-medium text-sm">Log Out</span>}
             </button>
@@ -558,14 +580,14 @@ export default function App() {
       )}
 
       {/* MAIN CONTENT */}
-      <main className="flex-1 w-full bg-slate-50 relative custom-scrollbar overflow-y-auto lg:min-h-0">
+      <main className="flex-1 w-full bg-slate-50 dark:bg-slate-900 relative custom-scrollbar overflow-y-auto lg:min-h-0">
 
          {/* Mobile/Tablet Header */}
-         <div className="lg:hidden bg-white p-4 flex justify-between items-center shadow-sm sticky top-0 z-20 border-b border-slate-200">
-             <div className="font-bold text-indigo-900 flex items-center gap-2">
-                 <BrainCircuit size={20} className="text-indigo-600" /> NeuroTrack
+         <div className="lg:hidden bg-white dark:bg-slate-800 p-4 flex justify-between items-center shadow-sm sticky top-0 z-20 border-b border-slate-200 dark:border-slate-700">
+             <div className="font-bold text-indigo-900 dark:text-indigo-300 flex items-center gap-2">
+                 <BrainCircuit size={20} className="text-indigo-600 dark:text-indigo-300" /> NeuroTrack
              </div>
-             <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition">
+             <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition">
                  <Menu size={24} />
              </button>
          </div>
@@ -593,29 +615,29 @@ export default function App() {
       {/* CELEBRATION MODAL (POPUP) */}
       {showCelebration && (
           <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-500">
-              <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden relative text-center p-8">
+              <div className="bg-white dark:bg-slate-800 rounded-3xl w-full max-w-md shadow-2xl overflow-hidden relative text-center p-8">
                   <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500"></div>
                   
-                  <div className="bg-indigo-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner text-indigo-600">
+                  <div className="bg-indigo-50 dark:bg-indigo-900/40 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner text-indigo-600 dark:text-indigo-400">
                       <PartyPopper size={40} />
                   </div>
 
-                  <h2 className="text-3xl font-extrabold text-slate-800 mb-2">
+                  <h2 className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 mb-2">
                       {celebrationType === 'weekly' ? "Hurray! It's the Weekend!" : "Month End Complete!"}
                   </h2>
-                  <p className="text-slate-500 mb-8">
+                  <p className="text-slate-500 dark:text-slate-400 mb-8">
                       Your neural data has been processed. The AI Agent has generated a complete {celebrationType === 'weekly' ? "Weekly Audit" : "Monthly Strategic Review"} for you.
                   </p>
 
                   <button 
                       onClick={handleViewAnalysisFromCelebration}
-                      className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold py-4 rounded-xl shadow-xl shadow-indigo-200 hover:shadow-2xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
+                      className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-700 dark:to-violet-700 text-white font-bold py-4 rounded-xl shadow-xl shadow-indigo-200 dark:shadow-indigo-900/50 hover:shadow-2xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
                   >
                       <Zap size={20} fill="currentColor" className="text-yellow-300" />
                       Take a Look at Analysis
                   </button>
                   
-                  <p className="text-[10px] text-slate-400 mt-4">
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-4">
                       *This report will vanish automatically at the end of the day.
                   </p>
               </div>
@@ -625,8 +647,8 @@ export default function App() {
       {/* ANALYSIS REPORT MODAL */}
       {aiReport && (
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-              <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[85vh] shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-300">
-                  <div className="bg-gradient-to-r from-indigo-600 to-violet-600 p-6 flex justify-between items-center text-white">
+              <div className="bg-white dark:bg-slate-800 rounded-3xl w-full max-w-2xl max-h-[85vh] shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+                  <div className="bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-700 dark:to-violet-700 p-6 flex justify-between items-center text-white">
                       <div className="flex items-center gap-3">
                           <div className="bg-white/20 p-2 rounded-lg"><BrainCircuit size={24} /></div>
                           <div>
@@ -638,11 +660,11 @@ export default function App() {
                           <X size={20} />
                       </button>
                   </div>
-                  <div className="p-8 overflow-y-auto custom-scrollbar prose prose-slate max-w-none">
+                  <div className="p-8 overflow-y-auto custom-scrollbar prose prose-slate dark:prose-invert max-w-none text-slate-900 dark:text-slate-100">
                       <ReactMarkdown>{aiReport}</ReactMarkdown>
                   </div>
-                  <div className="p-5 bg-slate-50 border-t flex justify-end">
-                      <button onClick={handleDismissReport} className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-200 flex items-center gap-2">
+                  <div className="p-5 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 flex justify-end">
+                      <button onClick={handleDismissReport} className="bg-indigo-600 dark:bg-indigo-700 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 dark:hover:bg-indigo-600 transition shadow-lg shadow-indigo-200 dark:shadow-indigo-900/50 flex items-center gap-2">
                           <CheckCircle size={18} />
                           Acknowledge & Continue
                       </button>

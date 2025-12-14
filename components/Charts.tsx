@@ -28,6 +28,36 @@ interface ChartProps {
 // Vibrant palette
 const COLORS = ['#6366f1', '#ec4899', '#8b5cf6', '#10b981', '#f59e0b', '#3b82f6'];
 
+// Helper to detect dark mode
+const isDarkMode = () => {
+  if (typeof window !== 'undefined') {
+    return document.documentElement.classList.contains('dark');
+  }
+  return false;
+};
+
+// Tooltip style helper
+const getTooltipStyle = () => {
+  const isDark = isDarkMode();
+  return {
+    borderRadius: '12px',
+    border: 'none',
+    boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+    backgroundColor: isDark ? '#1e293b' : '#ffffff',
+    color: isDark ? '#e2e8f0' : '#1e293b'
+  };
+};
+
+// Grid stroke helper
+const getGridStroke = () => {
+  return isDarkMode() ? '#475569' : '#f1f5f9';
+};
+
+// XAxis/YAxis tick color helper
+const getAxisTickColor = () => {
+  return isDarkMode() ? '#94a3b8' : '#94a3b8';
+};
+
 export const ProductivityChart: React.FC<ChartProps> = ({ history }) => {
   const data = Object.keys(history).sort().map(date => {
     const entry = history[date];
@@ -42,18 +72,18 @@ export const ProductivityChart: React.FC<ChartProps> = ({ history }) => {
   const displayData = data.slice(-14); // Last 14 entries
 
   return (
-    <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200 h-64 sm:h-80 flex flex-col min-w-0">
-      <h3 className="text-sm font-bold uppercase tracking-wider text-indigo-500 mb-6 flex items-center gap-2">
-        <span className="w-2 h-2 rounded-full bg-indigo-500"></span> Neural Growth Trend
+    <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 h-64 sm:h-80 flex flex-col min-w-0">
+      <h3 className="text-sm font-bold uppercase tracking-wider text-indigo-500 dark:text-indigo-400 mb-6 flex items-center gap-2">
+        <span className="w-2 h-2 rounded-full bg-indigo-500 dark:bg-indigo-400"></span> Neural Growth Trend
       </h3>
       <div className="flex-1 w-full min-h-0">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={displayData} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke={getGridStroke()} vertical={false} />
             <XAxis dataKey="date" tick={{fontSize: 10, fill: '#94a3b8'}} tickFormatter={(val) => val.slice(5)} axisLine={false} tickLine={false} />
             <YAxis tick={{fontSize: 10, fill: '#94a3b8'}} axisLine={false} tickLine={false} />
             <Tooltip 
-                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                contentStyle={getTooltipStyle()}
             />
             <Line type="monotone" dataKey="productivity" stroke="#6366f1" strokeWidth={3} dot={{r: 4, fill: '#6366f1', strokeWidth: 0}} activeDot={{ r: 6 }} name="Focus %" />
           </LineChart>
@@ -106,9 +136,9 @@ export const NeuralBalanceRadar: React.FC<{ data: AppData }> = ({ data }) => {
     ];
 
     return (
-        <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col items-center h-64 sm:h-80 min-w-0">
-             <h3 className="text-sm font-bold uppercase tracking-wider text-purple-500 mb-2 w-full text-left flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-purple-500"></span> Cognitive Balance
+        <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col items-center h-64 sm:h-80 min-w-0">
+             <h3 className="text-sm font-bold uppercase tracking-wider text-purple-500 dark:text-purple-400 mb-2 w-full text-left flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-purple-500 dark:bg-purple-400"></span> Cognitive Balance
              </h3>
              <div className="flex-1 w-full min-h-0">
                 <ResponsiveContainer width="100%" height="100%">
@@ -124,7 +154,7 @@ export const NeuralBalanceRadar: React.FC<{ data: AppData }> = ({ data }) => {
                         fill="#8b5cf6"
                         fillOpacity={0.4}
                     />
-                    <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                    <Tooltip contentStyle={getTooltipStyle()} />
                     </RadarChart>
                 </ResponsiveContainer>
              </div>
@@ -171,28 +201,28 @@ export const ActivityHeatmap: React.FC<{ history: Record<string, DailyEntry> }> 
 
     const getColor = (intensity: number) => {
         switch(intensity) {
-            case 0: return 'bg-slate-100 hover:bg-slate-200';
-            case 1: return 'bg-emerald-200 hover:bg-emerald-300';
-            case 2: return 'bg-emerald-300 hover:bg-emerald-400';
-            case 3: return 'bg-emerald-500 hover:bg-emerald-600';
-            case 4: return 'bg-emerald-700 shadow-sm shadow-emerald-500/50 hover:bg-emerald-800';
-            default: return 'bg-slate-100';
+            case 0: return 'bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600';
+            case 1: return 'bg-emerald-200 dark:bg-emerald-900/40 hover:bg-emerald-300 dark:hover:bg-emerald-900/60';
+            case 2: return 'bg-emerald-300 dark:bg-emerald-800/50 hover:bg-emerald-400 dark:hover:bg-emerald-700/60';
+            case 3: return 'bg-emerald-500 dark:bg-emerald-600/70 hover:bg-emerald-600 dark:hover:bg-emerald-600/90';
+            case 4: return 'bg-emerald-700 dark:bg-emerald-500 shadow-sm shadow-emerald-500/50 hover:bg-emerald-800 dark:hover:bg-emerald-400';
+            default: return 'bg-slate-100 dark:bg-slate-700';
         }
     };
 
     return (
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 col-span-1 lg:col-span-2 min-w-0">
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 col-span-1 lg:col-span-2 min-w-0">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-                <h3 className="text-sm font-bold uppercase tracking-wider text-emerald-600 flex items-center gap-2">
-                     <span className="w-2 h-2 rounded-full bg-emerald-500"></span> Consistency Map
+                <h3 className="text-sm font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+                     <span className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400"></span> Consistency Map
                 </h3>
-                <div className="flex bg-slate-100 rounded-lg p-1 self-start sm:self-auto">
+                <div className="flex bg-slate-100 dark:bg-slate-700 rounded-lg p-1 self-start sm:self-auto">
                     {['week', 'month', 'year'].map((v) => (
                         <button
                             key={v}
                             onClick={() => setView(v as any)}
                             className={`px-2 py-1 text-xs font-bold rounded-md transition capitalize ${
-                                view === v ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                                view === v ? 'bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
                             }`}
                         >
                             {v}
@@ -210,11 +240,11 @@ export const ActivityHeatmap: React.FC<{ history: Record<string, DailyEntry> }> 
                     />
                 ))}
             </div>
-            <div className="flex justify-end mt-4 gap-2 text-[10px] text-slate-400 items-center">
+            <div className="flex justify-end mt-4 gap-2 text-[10px] text-slate-400 dark:text-slate-500 items-center">
                 <span>Dormant</span>
-                <div className="w-2 h-2 rounded bg-slate-100"></div>
-                <div className="w-2 h-2 rounded bg-emerald-300"></div>
-                <div className="w-2 h-2 rounded bg-emerald-700"></div>
+                <div className="w-2 h-2 rounded bg-slate-100 dark:bg-slate-700"></div>
+                <div className="w-2 h-2 rounded bg-emerald-300 dark:bg-emerald-800/50"></div>
+                <div className="w-2 h-2 rounded bg-emerald-700 dark:bg-emerald-500"></div>
                 <span>Peak</span>
             </div>
         </div>
@@ -261,14 +291,14 @@ export const GoalCategoryChart: React.FC<{ goals: Goal[], type: 'short-term' | '
     });
 
     return (
-        <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200 h-64 sm:h-80 flex flex-col min-w-0">
-            <h3 className={`text-sm font-bold uppercase tracking-wider ${color === 'indigo' ? 'text-indigo-500' : 'text-purple-500'} mb-2 flex items-center gap-2`}>
-                <span className={`w-2 h-2 rounded-full ${color === 'indigo' ? 'bg-indigo-500' : 'bg-purple-500'}`}></span>
+        <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 h-64 sm:h-80 flex flex-col min-w-0">
+            <h3 className={`text-sm font-bold uppercase tracking-wider ${color === 'indigo' ? 'text-indigo-500 dark:text-indigo-400' : 'text-purple-500 dark:text-purple-400'} mb-2 flex items-center gap-2`}>
+                <span className={`w-2 h-2 rounded-full ${color === 'indigo' ? 'bg-indigo-500 dark:bg-indigo-400' : 'bg-purple-500 dark:bg-purple-400'}`}></span>
                 {type === 'short-term' ? 'Tactical Execution' : 'Strategic Roadmap'}
             </h3>
             <div className="flex-1 w-full min-h-0">
                 {data.length === 0 ? (
-                    <div className="h-full flex items-center justify-center text-slate-300 text-xs italic">
+                    <div className="h-full flex items-center justify-center text-slate-300 dark:text-slate-500 text-xs italic">
                         No active {type.replace('-', ' ')} goals
                     </div>
                 ) : (
@@ -278,12 +308,12 @@ export const GoalCategoryChart: React.FC<{ goals: Goal[], type: 'short-term' | '
                             margin={{ top: 20, right: 10, left: -20, bottom: 5 }}
                             barSize={30}
                         >
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={getGridStroke()} />
                             <XAxis dataKey="name" tick={{fill: '#94a3b8', fontSize: 10}} axisLine={false} tickLine={false} interval={0} />
                             <YAxis tick={{fill: '#94a3b8', fontSize: 10}} axisLine={false} tickLine={false} allowDecimals={false} />
                             <Tooltip 
-                                cursor={{fill: '#f8fafc'}}
-                                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                cursor={{fill: isDarkMode() ? '#f1f5f9' : '#f8fafc'}}
+                                contentStyle={getTooltipStyle()}
                                 formatter={(value: number, name: string) => [value, name === 'Completed' ? 'Milestones Done' : 'Remaining']}
                                 labelFormatter={(label, payload) => {
                                     if (payload && payload.length > 0) {
@@ -321,9 +351,9 @@ export const MissedTaskRiskChart: React.FC<{ history: Record<string, DailyEntry>
     const data = generateRiskData();
 
     return (
-        <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200 h-64 sm:h-80 flex flex-col min-w-0">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-red-500 mb-2 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-red-500"></span> Inconsistency Risk
+        <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 h-64 sm:h-80 flex flex-col min-w-0">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-red-500 dark:text-red-400 mb-2 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-red-500 dark:bg-red-400"></span> Inconsistency Risk
             </h3>
             <div className="flex-1 w-full min-h-0">
                 <ResponsiveContainer width="100%" height="100%">
@@ -336,8 +366,8 @@ export const MissedTaskRiskChart: React.FC<{ history: Record<string, DailyEntry>
                         </defs>
                         <XAxis dataKey="date" tick={{fontSize: 10, fill: '#94a3b8'}} tickFormatter={(val) => val.slice(5)} axisLine={false} tickLine={false} />
                         <YAxis tick={{fontSize: 10, fill: '#94a3b8'}} axisLine={false} tickLine={false} allowDecimals={false} />
-                        <Tooltip contentStyle={{ borderRadius: '8px', border: 'none' }} />
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                        <Tooltip contentStyle={getTooltipStyle()} />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={getGridStroke()} />
                         <Area type="monotone" dataKey="missed" stroke="#ef4444" fillOpacity={1} fill="url(#colorMissed)" strokeWidth={2} />
                     </AreaChart>
                 </ResponsiveContainer>
