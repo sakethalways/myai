@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Goal, Todo } from '../types';
 import * as ai from '../services/geminiService';
 import { v4 as uuidv4 } from 'uuid';
@@ -13,6 +13,15 @@ interface GoalsManagerProps {
 const GoalsManager: React.FC<GoalsManagerProps> = ({ goals, onUpdateGoals, confirmAction }) => {
   const [newGoal, setNewGoal] = useState({ title: '', type: 'short-term', deadline: '' });
   const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const dateInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const addGoal = (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,12 +142,21 @@ const GoalsManager: React.FC<GoalsManagerProps> = ({ goals, onUpdateGoals, confi
 
                 <div className="w-full lg:w-48 space-y-2">
                     <label className="text-xs font-bold text-indigo-300 dark:text-indigo-400 uppercase tracking-widest pl-1">Deadline</label>
-                    <input
-                        type="date"
-                        value={newGoal.deadline}
-                        onChange={(e) => setNewGoal({ ...newGoal, deadline: e.target.value })}
-                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3.5 text-slate-900 dark:text-slate-100 focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none font-medium text-sm"
-                    />
+                    <div className="relative">
+                        <input
+                            ref={dateInputRef}
+                            type="date"
+                            value={newGoal.deadline}
+                            onChange={(e) => setNewGoal({ ...newGoal, deadline: e.target.value })}
+                            className={`w-full bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3.5 text-sm sm:text-base text-slate-900 dark:text-slate-100 focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none font-medium ${isMobile ? 'opacity-0 absolute inset-0 z-10' : ''}`}
+                            placeholder="dd-mm-yyyy"
+                        />
+                        {isMobile && (
+                            <div className="w-full bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm text-slate-500 dark:text-slate-400 font-medium cursor-pointer pointer-events-none">
+                                {newGoal.deadline || 'Click here to select date'}
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 <div className="flex gap-2 w-full lg:w-auto">
@@ -325,7 +343,7 @@ const GoalCard: React.FC<{ goal: Goal; onUpdate: (g: Goal) => void; onDelete: ()
                                 type="date" 
                                 value={editForm.deadline}
                                 onChange={(e) => setEditForm({...editForm, deadline: e.target.value})}
-                                className="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 rounded-lg px-3 py-2 text-sm outline-none"
+                                className="w-full border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2.5 text-sm outline-none"
                             />
                         </div>
                          <div className="space-y-1">

@@ -407,7 +407,13 @@ export default function App() {
                                  </div>
                              </div>
 
-                             <div className="w-full md:w-80 bg-white/10 dark:bg-slate-900/60 backdrop-blur-md rounded-2xl p-4 md:p-5 border border-white/20 dark:border-slate-800">
+                             <div
+                                 className="w-full md:w-80 bg-white/10 dark:bg-slate-900/60 backdrop-blur-md rounded-2xl p-4 md:p-5 border border-white/20 dark:border-slate-800 cursor-pointer"
+                                 onClick={() => handleNavClick('journal')}
+                                 role="button"
+                                 tabIndex={0}
+                                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleNavClick('journal'); } }}
+                             >
                                  <h3 className="text-xs font-bold uppercase text-indigo-200 dark:text-indigo-300 mb-3 flex items-center gap-2">
                                      <Zap size={14} className="text-yellow-300 dark:text-yellow-200" /> Today's Focus
                                  </h3>
@@ -675,10 +681,10 @@ export default function App() {
 
       {/* Loading Overlay */}
       {isGenerating && !showCelebration && (
-          <div className="fixed inset-0 bg-white/90 backdrop-blur-md z-50 flex flex-col items-center justify-center">
-               <div className="w-20 h-20 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-6"></div>
-               <h2 className="text-2xl font-bold text-indigo-900 animate-pulse">Analyzing Neural Patterns...</h2>
-               <p className="text-slate-500 mt-2">Generating personalized insights from your activity data.</p>
+          <div className="fixed inset-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md z-50 flex flex-col items-center justify-center px-4">
+               <div className="w-16 h-16 sm:w-20 sm:h-20 border-4 border-indigo-200 dark:border-indigo-800 border-t-indigo-600 dark:border-t-indigo-400 rounded-full animate-spin mb-4 sm:mb-6"></div>
+               <h2 className="text-xl sm:text-2xl font-bold text-indigo-900 dark:text-indigo-100 animate-pulse text-center">Analyzing Neural Patterns...</h2>
+               <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm sm:text-base text-center">Generating personalized insights from your activity data.</p>
           </div>
       )}
     </div>
