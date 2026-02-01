@@ -559,10 +559,6 @@ export default function App() {
         </nav>
 
         <div className="p-4 border-t border-slate-800 dark:border-slate-700 bg-slate-950 dark:bg-slate-900 space-y-2">
-            <button onClick={() => db.exportData()} className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl text-slate-400 dark:text-slate-500 hover:bg-emerald-900/30 dark:hover:bg-emerald-900/40 hover:text-emerald-400 dark:hover:text-emerald-300 transition ${!isSidebarOpen && 'justify-center'}`}>
-                <Download size={20} />
-                {isSidebarOpen && <span className="font-medium text-sm">Export Data</span>}
-            </button>
             <button onClick={() => supabase.auth.signOut()} className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl text-slate-400 dark:text-slate-500 hover:bg-red-900/30 dark:hover:bg-red-900/40 hover:text-red-400 dark:hover:text-red-300 transition ${!isSidebarOpen && 'justify-center'}`}>
                 <X size={20} />
                 {isSidebarOpen && <span className="font-medium text-sm">Log Out</span>}

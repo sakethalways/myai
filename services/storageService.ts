@@ -1,6 +1,5 @@
 import { AppData, DailyEntry, DEFAULT_DATA, Goal, Todo, UserProfile, AIAnalysis } from '../types';
 import { supabase } from './supabaseClient';
-import * as XLSX from 'xlsx';
 
 const getUserId = async () => {
   const { data: { user } } = await supabase.auth.getUser();
@@ -358,80 +357,7 @@ export const setUserSetting = async (key: string, value: string): Promise<void> 
     }, { onConflict: 'user_id,setting_key' });
 };
 
-export const exportData = async () => {
-    try {
-        const db = await getDB();
-        
-        // 1. Prepare Profile Sheet
-        const profileData = [
-            ["Metric", "Value"],
-            ["Name", db.profile.name],
-            ["Age", db.profile.age],
-            ["Height (cm)", db.profile.height],
-            ["Weight (kg)", db.profile.weight],
-            ["App Version", db.version]
-        ];
 
-        // 2. Prepare History Sheet (Flattened)
-        const historyHeaders = ["Date", "Total Tasks", "Completed Tasks", "Mood Score", "Journal Entry", "Tasks List"];
-        const historyRows = Object.keys(db.history).sort().map(date => {
-            const entry = db.history[date];
-            const tasksSummary = entry.todos ? entry.todos.map(t => `[${t.completed ? 'x' : ' '}] ${t.text}`).join('; ') : "";
-            return [
-                date,
-                entry.totalCount,
-                entry.completedCount,
-                entry.moodScore,
-                entry.journal,
-                tasksSummary
-            ];
-        });
-        const historyData = [historyHeaders, ...historyRows];
-
-        // 3. Prepare Goals Sheet
-        const goalHeaders = ["Title", "Type", "Deadline", "Progress (%)", "Completed", "Milestones"];
-        const goalRows = db.goals.map(g => {
-            const milestones = g.tasks.map(t => `[${t.completed ? 'x' : ' '}] ${t.text}`).join('; ');
-            return [
-                g.title,
-                g.type,
-                g.deadline,
-                Math.round(g.progress),
-                g.completed ? "Yes" : "No",
-                milestones
-            ];
-        });
-        const goalsData = [goalHeaders, ...goalRows];
-
-        // Create Workbook
-        const wb = XLSX.utils.book_new();
-        
-        const wsProfile = XLSX.utils.aoa_to_sheet(profileData);
-        XLSX.utils.book_append_sheet(wb, wsProfile, "Profile Identity");
-        
-        const wsHistory = XLSX.utils.aoa_to_sheet(historyData);
-        XLSX.utils.book_append_sheet(wb, wsHistory, "Daily Logs");
-        
-        const wsGoals = XLSX.utils.aoa_to_sheet(goalsData);
-        XLSX.utils.book_append_sheet(wb, wsGoals, "Goals Protocol");
-
-        // Generate Excel File
-        XLSX.writeFile(wb, `NeuroTrack_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
-
-    } catch (e) {
-        console.error("Export failed", e);
-        // Fallback to JSON if XLSX fails
-        const db = await getDB();
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db, null, 2));
-        const downloadAnchorNode = document.createElement('a');
-        downloadAnchorNode.setAttribute("href", dataStr);
-        downloadAnchorNode.setAttribute("download", `neurotrack_backup_fallback_${new Date().toISOString().split('T')[0]}.json`);
-        document.body.appendChild(downloadAnchorNode);
-        downloadAnchorNode.click();
-        downloadAnchorNode.remove();
-        alert("Excel export failed (Library error). Downloaded JSON backup instead.");
-    }
-};
 
 // --- Friend Functions ---
 
