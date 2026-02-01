@@ -12,7 +12,7 @@ import ChatAgent from './components/ChatAgent';
 import Friends from './components/Friends';
 import { MissedTasks } from './components/MissedTasks';
 import { ConfirmationModal } from './components/ConfirmationModal';
-import { ProductivityChart, NeuralBalanceRadar, ActivityHeatmap, GoalCategoryChart } from './components/Charts';
+import { ProductivityChart, NeuralBalanceRadar, ActivityHeatmap, GoalCategoryChart, MissedTaskRiskChart } from './components/Charts';
 import Auth from './components/Auth';
 import Notification from './components/Notification';
 import LoadingScreen from './components/LoadingScreen';
@@ -442,6 +442,7 @@ export default function App() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                          <NeuralBalanceRadar data={data} />
                          <ProductivityChart history={data.history} />
+                         <MissedTaskRiskChart history={data.history} />
                          <GoalCategoryChart goals={data.goals} type="short-term" color="indigo" />
                          <GoalCategoryChart goals={data.goals} type="long-term" color="purple" />
                     </div>

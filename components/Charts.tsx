@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import {
   LineChart,
   Line,
@@ -59,7 +60,12 @@ const getAxisTickColor = () => {
 };
 
 export const ProductivityChart: React.FC<ChartProps> = ({ history }) => {
-  const data = Object.keys(history).sort().map(date => {
+  const [startIndex, setStartIndex] = useState(0);
+  const [touchStart, setTouchStart] = useState(0);
+  const chartRef = useRef<HTMLDivElement>(null);
+  const DAYS_TO_SHOW = 14;
+
+  const allData = Object.keys(history).sort().map(date => {
     const entry = history[date];
     const percentage = entry.totalCount > 0 ? (entry.completedCount / entry.totalCount) * 100 : 0;
     return {
@@ -69,25 +75,102 @@ export const ProductivityChart: React.FC<ChartProps> = ({ history }) => {
     };
   });
 
-  const displayData = data.slice(-14); // Last 14 entries
+  // Auto-scroll to show latest data on mount or when data changes
+  useEffect(() => {
+    if (allData.length > DAYS_TO_SHOW) {
+      setStartIndex(allData.length - DAYS_TO_SHOW);
+    }
+  }, [allData.length]);
+
+  const displayData = allData.slice(startIndex, startIndex + DAYS_TO_SHOW);
+  
+  // Can move forward if there's data ahead
+  const canMoveForward = startIndex + DAYS_TO_SHOW < allData.length;
+  // Can move backward if not at start
+  const canMoveBackward = startIndex > 0;
+
+  const handlePrevious = () => {
+    setStartIndex(Math.max(0, startIndex - DAYS_TO_SHOW));
+  };
+
+  const handleNext = () => {
+    if (canMoveForward) {
+      setStartIndex(Math.min(allData.length - DAYS_TO_SHOW, startIndex + DAYS_TO_SHOW));
+    }
+  };
+
+  // Swipe/drag handling for mobile
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const touchEnd = e.changedTouches[0].clientX;
+    const diff = touchStart - touchEnd;
+    
+    // Swipe left (negative x movement) = go forward in time
+    if (diff > 50 && canMoveForward) {
+      handleNext();
+    }
+    // Swipe right (positive x movement) = go backward in time
+    if (diff < -50 && canMoveBackward) {
+      handlePrevious();
+    }
+  };
+
+  const dateRangeText = displayData.length > 0 
+    ? `${displayData[0].date} to ${displayData[displayData.length - 1].date}`
+    : 'No data';
 
   return (
-    <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 h-64 sm:h-80 flex flex-col min-w-0">
-      <h3 className="text-sm font-bold uppercase tracking-wider text-indigo-500 dark:text-indigo-400 mb-6 flex items-center gap-2">
+    <div className="bg-white dark:bg-slate-800 p-3 sm:p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col min-w-0 h-72 sm:h-96">
+      <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-indigo-500 dark:text-indigo-400 flex items-center gap-2 flex-shrink-0 mb-3 sm:mb-4">
         <span className="w-2 h-2 rounded-full bg-indigo-500 dark:bg-indigo-400"></span> Neural Growth Trend
       </h3>
-      <div className="flex-1 w-full min-h-0">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={displayData} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke={getGridStroke()} vertical={false} />
-            <XAxis dataKey="date" tick={{fontSize: 10, fill: '#94a3b8'}} tickFormatter={(val) => val.slice(5)} axisLine={false} tickLine={false} />
-            <YAxis tick={{fontSize: 10, fill: '#94a3b8'}} axisLine={false} tickLine={false} />
-            <Tooltip 
-                contentStyle={getTooltipStyle()}
-            />
-            <Line type="monotone" dataKey="productivity" stroke="#6366f1" strokeWidth={3} dot={{r: 4, fill: '#6366f1', strokeWidth: 0}} activeDot={{ r: 6 }} name="Focus %" />
-          </LineChart>
-        </ResponsiveContainer>
+      {displayData.length === 0 ? (
+        <div className="flex-1 flex items-center justify-center text-slate-400 dark:text-slate-500 text-sm">
+          No data available
+        </div>
+      ) : (
+        <div 
+          ref={chartRef}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          className="flex-1 w-full min-h-0 select-none"
+        >
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={displayData} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={getGridStroke()} vertical={false} />
+              <XAxis dataKey="date" tick={{fontSize: 10, fill: '#94a3b8'}} tickFormatter={(val) => val.slice(5)} axisLine={false} tickLine={false} />
+              <YAxis tick={{fontSize: 10, fill: '#94a3b8'}} axisLine={false} tickLine={false} />
+              <Tooltip 
+                  contentStyle={getTooltipStyle()}
+              />
+              <Line type="monotone" dataKey="productivity" stroke="#6366f1" strokeWidth={3} dot={{r: 4, fill: '#6366f1', strokeWidth: 0}} activeDot={{ r: 6 }} name="Focus %" />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+      <div className="flex items-center justify-center gap-1 sm:gap-2 flex-shrink-0 mt-2 sm:mt-3 flex-wrap">
+        <button
+          onClick={handlePrevious}
+          disabled={!canMoveBackward}
+          className="p-1 sm:p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
+          aria-label="Previous"
+        >
+          <ChevronLeft size={16} className="sm:w-[18px] sm:h-[18px] text-slate-600 dark:text-slate-400" />
+        </button>
+        <span className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap px-2 py-1 rounded bg-slate-50 dark:bg-slate-700 min-w-max">
+          {dateRangeText}
+        </span>
+        <button
+          onClick={handleNext}
+          disabled={!canMoveForward}
+          className="p-1 sm:p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
+          aria-label="Next"
+        >
+          <ChevronRight size={16} className="sm:w-[18px] sm:h-[18px] text-slate-600 dark:text-slate-400" />
+        </button>
       </div>
     </div>
   );
@@ -380,9 +463,14 @@ export const GoalCategoryChart: React.FC<{ goals: Goal[], type: 'short-term' | '
 };
 
 export const MissedTaskRiskChart: React.FC<{ history: Record<string, DailyEntry> }> = ({ history }) => {
-    const generateRiskData = () => {
+    const [startIndex, setStartIndex] = useState(0);
+    const [touchStart, setTouchStart] = useState(0);
+    const chartRef = useRef<HTMLDivElement>(null);
+    const DAYS_TO_SHOW = 14;
+
+    const generateAllRiskData = () => {
         const todayStr = new Date().toISOString().split('T')[0];
-        const dates = Object.keys(history).filter(d => d < todayStr).sort().slice(-14); // Last 14 days excluding today
+        const dates = Object.keys(history).filter(d => d < todayStr).sort();
         
         return dates.map(date => {
             const entry = history[date];
@@ -394,29 +482,108 @@ export const MissedTaskRiskChart: React.FC<{ history: Record<string, DailyEntry>
         });
     };
 
-    const data = generateRiskData();
+    const allData = generateAllRiskData();
+
+    // Auto-scroll to show latest data on mount or when data changes
+    useEffect(() => {
+        if (allData.length > DAYS_TO_SHOW) {
+            setStartIndex(allData.length - DAYS_TO_SHOW);
+        }
+    }, [allData.length]);
+
+    const displayData = allData.slice(startIndex, startIndex + DAYS_TO_SHOW);
+
+    // Can move forward if there's data ahead
+    const canMoveForward = startIndex + DAYS_TO_SHOW < allData.length;
+    // Can move backward if not at start
+    const canMoveBackward = startIndex > 0;
+
+    const handlePrevious = () => {
+        setStartIndex(Math.max(0, startIndex - DAYS_TO_SHOW));
+    };
+
+    const handleNext = () => {
+        if (canMoveForward) {
+            setStartIndex(Math.min(allData.length - DAYS_TO_SHOW, startIndex + DAYS_TO_SHOW));
+        }
+    };
+
+    // Swipe/drag handling for mobile
+    const handleTouchStart = (e: React.TouchEvent) => {
+        setTouchStart(e.touches[0].clientX);
+    };
+
+    const handleTouchEnd = (e: React.TouchEvent) => {
+        const touchEnd = e.changedTouches[0].clientX;
+        const diff = touchStart - touchEnd;
+        
+        // Swipe left (negative x movement) = go forward in time
+        if (diff > 50 && canMoveForward) {
+            handleNext();
+        }
+        // Swipe right (positive x movement) = go backward in time
+        if (diff < -50 && canMoveBackward) {
+            handlePrevious();
+        }
+    };
+
+    const dateRangeText = displayData.length > 0 
+        ? `${displayData[0].date} to ${displayData[displayData.length - 1].date}`
+        : 'No data';
 
     return (
-        <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 h-64 sm:h-80 flex flex-col min-w-0">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-red-500 dark:text-red-400 mb-2 flex items-center gap-2">
+        <div className="bg-white dark:bg-slate-800 p-3 sm:p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col min-w-0 h-72 sm:h-96">
+            <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-red-500 dark:text-red-400 flex items-center gap-2 mb-3 sm:mb-4 flex-shrink-0">
                 <span className="w-2 h-2 rounded-full bg-red-500 dark:bg-red-400"></span> Inconsistency Risk
             </h3>
-            <div className="flex-1 w-full min-h-0">
-                <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                        <defs>
-                            <linearGradient id="colorMissed" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
-                                <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
-                            </linearGradient>
-                        </defs>
-                        <XAxis dataKey="date" tick={{fontSize: 10, fill: '#94a3b8'}} tickFormatter={(val) => val.slice(5)} axisLine={false} tickLine={false} />
-                        <YAxis tick={{fontSize: 10, fill: '#94a3b8'}} axisLine={false} tickLine={false} allowDecimals={false} />
-                        <Tooltip contentStyle={getTooltipStyle()} />
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={getGridStroke()} />
-                        <Area type="monotone" dataKey="missed" stroke="#ef4444" fillOpacity={1} fill="url(#colorMissed)" strokeWidth={2} />
-                    </AreaChart>
-                </ResponsiveContainer>
+            {displayData.length === 0 ? (
+                <div className="flex-1 flex items-center justify-center text-slate-400 dark:text-slate-500 text-sm">
+                    No data available
+                </div>
+            ) : (
+                <div 
+                    ref={chartRef}
+                    onTouchStart={handleTouchStart}
+                    onTouchEnd={handleTouchEnd}
+                    className="flex-1 w-full min-h-0 select-none"
+                >
+                    <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={displayData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                            <defs>
+                                <linearGradient id="colorMissed" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
+                                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                                </linearGradient>
+                            </defs>
+                            <XAxis dataKey="date" tick={{fontSize: 10, fill: '#94a3b8'}} tickFormatter={(val) => val.slice(5)} axisLine={false} tickLine={false} />
+                            <YAxis tick={{fontSize: 10, fill: '#94a3b8'}} axisLine={false} tickLine={false} allowDecimals={false} />
+                            <Tooltip contentStyle={getTooltipStyle()} />
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={getGridStroke()} />
+                            <Area type="monotone" dataKey="missed" stroke="#ef4444" fillOpacity={1} fill="url(#colorMissed)" strokeWidth={2} />
+                        </AreaChart>
+                    </ResponsiveContainer>
+                </div>
+            )}
+            <div className="flex items-center justify-center gap-1 sm:gap-2 flex-shrink-0 mt-2 sm:mt-3 flex-wrap">
+                <button
+                    onClick={handlePrevious}
+                    disabled={!canMoveBackward}
+                    className="p-1 sm:p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                    aria-label="Previous"
+                >
+                    <ChevronLeft size={16} className="sm:w-[18px] sm:h-[18px] text-slate-600 dark:text-slate-400" />
+                </button>
+                <span className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap px-2 py-1 rounded bg-slate-50 dark:bg-slate-700 min-w-max">
+                    {dateRangeText}
+                </span>
+                <button
+                    onClick={handleNext}
+                    disabled={!canMoveForward}
+                    className="p-1 sm:p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                    aria-label="Next"
+                >
+                    <ChevronRight size={16} className="sm:w-[18px] sm:h-[18px] text-slate-600 dark:text-slate-400" />
+                </button>
             </div>
         </div>
     );
